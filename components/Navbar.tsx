@@ -18,7 +18,7 @@ export default function Navbar({ onSupportClick }: NavbarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [user, setUser] = useState<{ name: string; email: string; avatar_url?: string | null } | null>(null);
+  const [user, setUser] = useState<{ name: string; email: string; username?: string | null; avatar_url?: string | null } | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
@@ -151,11 +151,11 @@ export default function Navbar({ onSupportClick }: NavbarProps) {
                   style={{ borderColor: "#e4bdbc" }}
                 >
                   <Link
-                    href="/dashboard"
+                    href={user.username ? `/${user.username}` : "/dashboard/settings"}
                     onClick={() => setShowDropdown(false)}
                     className="block px-4 py-2.5 hover:bg-gray-50 text-[#1b1c19] font-medium"
                   >
-                    Tableau de bord
+                    Voir ma page
                   </Link>
                   <Link
                     href="/dashboard"
@@ -163,7 +163,22 @@ export default function Navbar({ onSupportClick }: NavbarProps) {
                     className="block px-4 py-2.5 hover:bg-gray-50 text-[#1b1c19] font-medium border-b"
                     style={{ borderColor: "#f5f3ee" }}
                   >
-                    Paramètres
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/dashboard/settings"
+                    onClick={() => setShowDropdown(false)}
+                    className="block px-4 py-2.5 hover:bg-gray-50 text-[#1b1c19] font-medium"
+                  >
+                    Mon compte
+                  </Link>
+                  <Link
+                    href="/signup"
+                    onClick={() => setShowDropdown(false)}
+                    className="block px-4 py-2.5 hover:bg-gray-50 text-[#1b1c19] font-medium border-b"
+                    style={{ borderColor: "#f5f3ee" }}
+                  >
+                    Inviter un créateur
                   </Link>
                   <button
                     onClick={handleLogout}
