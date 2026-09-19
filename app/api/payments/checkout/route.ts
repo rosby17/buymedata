@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import crypto from "node:crypto";
 import { createCheckout, WarapPayError } from "@/lib/warappay";
+import { createTaraCheckout, TaraMoneyError } from "@/lib/taramoney";
 import { query, withTransaction } from "@/lib/db";
 import { currentUserId } from "@/lib/auth";
 
@@ -10,8 +11,9 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const productCode = process.env.WARAPPAY_PRODUCT_CODE;
+    const paymentMethod = body.payment_method === "card" || body.payment_method === "paypal" ? body.payment_method : "mobile_money";
     const origin = request.nextUrl.origin;
-    if (!productCode) return Response.json({ error: "Payment product is not configured" }, { status: 503 });
+    if (paymentMethod === "mobile_money" && !productCode) return Response.json({ error: "Le paiement Mobile Money n'est pas configuré" }, { status: 503 });
     if (!body?.email || !body?.customer_name || !body?.amount) {
       return Response.json({ error: "email, customer_name and amount are required" }, { status: 400 });
     }
@@ -31,24 +33,24 @@ export async function POST(request: NextRequest) {
     await withTransaction(async (client) => {
       await client.query(`INSERT INTO orders (id, creator_id, campaign_id, supporter_id, email, customer_name, customer_phone, amount, message, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending')`, [orderId, creatorId, campaignId, supporterId, String(body.email).trim().toLowerCase(), String(body.customer_name).trim(), body.customer_phone ? String(body.customer_phone) : null, amount, body.message ? String(body.message).trim().slice(0, 500) : null]);
     });
-    const result = await createCheckout({
-      product_code: productCode,
+    const result = paymentMethod === "mobile_money" ? await createCheckout({
+      product_code: productCode || "",
       email: String(body.email),
       customer_name: String(body.customer_name),
       customer_phone: body.customer_phone ? String(body.customer_phone) : undefined,
       redirect_url: `${origin}/merci?order_id=${orderId}`,
       meta: { order_id: orderId, creator_id: creatorId, amount: String(amount) },
-    });
-    await queryPayment(orderId, result);
+    }) : await createTaraCheckout({ orderId, amount, origin, customerName: String(body.customer_name), provider: paymentMethod });
+    await queryPayment(orderId, result, paymentMethod === "mobile_money" ? "warappay" : "taramoney");
     return Response.json({ ...result, order_id: orderId });
   } catch (error) {
-    if (error instanceof WarapPayError) return Response.json({ error: error.message, code: error.code }, { status: error.status });
+    if (error instanceof WarapPayError || error instanceof TaraMoneyError) return Response.json({ error: error.message }, { status: error.status });
     return Response.json({ error: "Unable to create checkout" }, { status: 500 });
   }
 }
 
-async function queryPayment(orderId: string, result: { id: string; status: string; checkout_url: string | null }) {
+async function queryPayment(orderId: string, result: { id: string; status: string; checkout_url: string | null }, provider: string) {
   const { query } = await import("@/lib/db");
-  await query(`INSERT INTO payments (order_id, provider_payment_id, checkout_url, status, raw_status, amount) SELECT $1, $2, $3, $4, $4, amount FROM orders WHERE id = $1`, [orderId, result.id, result.checkout_url, result.status]);
+  await query(`INSERT INTO payments (order_id, provider, provider_payment_id, checkout_url, status, raw_status, amount) SELECT $1, $2, $3, $4, $5, $5, amount FROM orders WHERE id = $1`, [orderId, provider, result.id, result.checkout_url, result.status]);
   await query(`UPDATE orders SET status = $2, updated_at = now() WHERE id = $1`, [orderId, result.status]);
 }

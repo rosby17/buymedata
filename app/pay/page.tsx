@@ -35,6 +35,7 @@ function PaymentFlowInner() {
   const [email, setEmail] = useState("");
   const [paymentError, setPaymentError] = useState("");
   const [showOverlay, setShowOverlay] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"mobile_money" | "card" | "paypal">("mobile_money");
 
   useEffect(() => {
     if (!creatorId) return;
@@ -61,7 +62,7 @@ function PaymentFlowInner() {
     setShowOverlay(true);
     setPaymentError("");
     try {
-      const response = await fetch("/api/payments/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ creator_id: creatorId, campaign_id: campaignId || undefined, amount: currentAmount, email, customer_name: customerName, message, customer_phone: "" }) });
+      const response = await fetch("/api/payments/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ creator_id: creatorId, campaign_id: campaignId || undefined, amount: currentAmount, email, customer_name: customerName, message, customer_phone: "", payment_method: paymentMethod }) });
       const data = await response.json();
       if (!response.ok || !data.checkout_url) throw new Error(data.error || "Impossible de créer le paiement");
       window.location.assign(data.checkout_url);
@@ -352,10 +353,9 @@ function PaymentFlowInner() {
             {step === 3 && (
               <div className="flex-grow flex flex-col">
                 <h3 className="text-2xl font-semibold mb-1" style={{ color: "#1b1c19" }}>Paiement sécurisé</h3>
-                <p className="text-sm mb-5" style={{ color: "#5b403f" }}>Vous serez redirigé vers WaraPay pour choisir un moyen réellement disponible et valider le paiement.</p>
-                <div className="mb-5 flex items-center gap-4 rounded-xl border border-[#e4bdbc] bg-[#fbf9f4] p-5">
-                  <span className="material-symbols-outlined rounded-full bg-[#edf6ee] p-3 text-[#496546]">verified_user</span>
-                  <div><p className="font-bold text-[#1b1c19]">WaraPay</p><p className="mt-1 text-xs text-[#5b403f]">Mobile Money et autres moyens proposés sur la page de paiement.</p></div>
+                <p className="text-sm mb-5" style={{ color: "#5b403f" }}>Choisissez votre moyen de paiement. Vous serez redirigé vers le prestataire sécurisé correspondant.</p>
+                <div className="mb-5 grid gap-3 sm:grid-cols-3">
+                  {[{id:"mobile_money",label:"Mobile Money",detail:"Orange Money, MTN MoMo · WaraPay"},{id:"card",label:"Carte bancaire",detail:"Visa / Mastercard · TaraMoney"},{id:"paypal",label:"PayPal",detail:"Paiement international · TaraMoney"}].map((method)=><button key={method.id} onClick={()=>setPaymentMethod(method.id as typeof paymentMethod)} className={`rounded-xl border p-4 text-left transition ${paymentMethod===method.id?"border-[#b20024] bg-[#fff2f1]":"border-[#e4bdbc] bg-[#fbf9f4]"}`}><p className="font-bold text-[#1b1c19]">{method.label}</p><p className="mt-1 text-xs text-[#5b403f]">{method.detail}</p></button>)}
                 </div>
 
                 <div className="flex flex-col gap-3 mt-auto">
