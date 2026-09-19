@@ -13,7 +13,7 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !password) {
       setError("Veuillez remplir tous les champs");
@@ -21,11 +21,17 @@ export default function SignupPage() {
     }
     setLoading(true);
     setError("");
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const response = await fetch("/api/auth/session", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email, password, name, register: true }) });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Inscription impossible");
       sessionStorage.setItem("isLoggedIn", "true");
       router.push("/dashboard");
-    }, 1500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Inscription impossible");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

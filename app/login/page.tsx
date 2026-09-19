@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
       setError("Veuillez remplir tous les champs");
@@ -19,11 +19,21 @@ export default function LoginPage() {
     }
     setLoading(true);
     setError("");
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const response = await fetch("/api/auth/session", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Connexion impossible");
       sessionStorage.setItem("isLoggedIn", "true");
       router.push("/dashboard");
-    }, 1000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Connexion impossible");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
