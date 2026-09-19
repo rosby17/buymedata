@@ -58,16 +58,16 @@ export default function SignupPage() {
       <div className="hidden md:flex relative w-full md:w-1/2 lg:w-3/5 h-64 md:h-screen">
         <img
           className="absolute inset-0 w-full h-full object-cover"
-          src="https://lh3.googleusercontent.com/aida-public/AB6AXuCcsimbu2xhu1T6ZYloNV1YRBp47djcK_XApbuyow9rL-5wdPdscux8W_aXWafxxp1d3Cu_VPAnoCEZFdrlbP3hPJVTg_oozbMyux_zBqqMhehLL6uErRxiXKp6J6DO4guox9K2mMWxMzL1n5wCscYRIVzvZXG5KdH0zbmMf2NnGomyBgTYwVWwe47stRYZRWQQSAQKE-djXfRH7_NhE4Fi8ttqHr7Pt3_Sq-yF70UDM4vAx44xzWSu7WlZreOXSw95K9raMrEb5Az9"
-          alt="Creative workspace"
+          src="/signup-hero.png"
+          alt="Créatrice préparant sa page Buy Me Data"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
         <div className="absolute bottom-12 left-12 right-12 text-white">
           <h2 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">
-            Créer. Soutenir.<br />S&apos;élever ensemble.
+            Créez votre page.<br />Recevez du soutien.
           </h2>
           <p className="text-lg opacity-90 max-w-md">
-            Rejoignez la communauté Buy Me Data. Financez la créativité et propulsez les créateurs.
+            Donnez à votre créativité un espace clair pour être soutenue.
           </p>
         </div>
       </div>
