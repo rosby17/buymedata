@@ -109,11 +109,26 @@ function ExploreInner() {
   const [activeCategory, setActiveCategory] = useState("Tous");
   const [email, setEmail] = useState("");
   const [emailSent, setEmailSent] = useState(false);
+  const [dbCreators, setDbCreators] = useState<typeof FEATURED_CREATORS>([]);
+  const [dbCampaigns, setDbCampaigns] = useState<typeof ACTIVE_CAMPAIGNS>([]);
+
+  useEffect(() => {
+    fetch("/api/creators").then((r) => r.ok ? r.json() : Promise.reject()).then((payload) => {
+      const creators = (payload.creators || []).map((creator: any) => {
+        const campaign = creator.campaigns?.[0];
+        const total = Number(campaign?.target_amount || 0);
+        const current = Number(campaign?.collected_amount || 0);
+        return { id: creator.id, name: creator.name, role: "Créateur", data: `${current.toLocaleString("fr-FR")} FCFA`, pct: total ? Math.min(100, Math.round(current * 100 / total)) : 0, category: "Tous", img: creator.avatar_url || "/buy-me-data-mascot.png" };
+      });
+      setDbCreators(creators);
+      setDbCampaigns((payload.creators || []).flatMap((creator: any) => (creator.campaigns || []).map((campaign: any) => ({ id: campaign.id, category: "Créateurs", title: campaign.title, description: campaign.description || "", current: `${Number(campaign.collected_amount).toLocaleString("fr-FR")} FCFA`, total: `${Number(campaign.target_amount).toLocaleString("fr-FR")} FCFA`, pct: campaign.target_amount ? Math.min(100, Math.round(campaign.collected_amount * 100 / campaign.target_amount)) : 0, contributors: 0, daysLeft: "En cours", img: creator.avatar_url || "/buy-me-data-mascot.png" }))));
+    }).catch(() => { setDbCreators([]); setDbCampaigns([]); });
+  }, []);
 
   const filteredCreators =
     activeCategory === "Tous"
-      ? FEATURED_CREATORS
-      : FEATURED_CREATORS.filter((c) => c.category === activeCategory);
+      ? dbCreators
+      : dbCreators.filter((c) => c.category === activeCategory);
 
   const searchedCreators = query
     ? filteredCreators.filter(
@@ -356,7 +371,7 @@ function ExploreInner() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {ACTIVE_CAMPAIGNS.map((c, i) => (
+            {dbCampaigns.map((c, i) => (
               <Link href="/" key={c.id}>
                 <div
                   className="bg-white rounded-2xl border flex flex-col md:flex-row gap-6 p-6 transition-all cursor-pointer h-full"
