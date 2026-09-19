@@ -39,6 +39,9 @@ function PaymentFlowInner() {
     PRESET_AMOUNTS.includes(initialAmount) ? initialAmount : null
   );
   const [message, setMessage] = useState(initialMessage);
+  const [customerName, setCustomerName] = useState("");
+  const [email, setEmail] = useState("");
+  const [paymentError, setPaymentError] = useState("");
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [showOverlay, setShowOverlay] = useState(false);
   const [overlayState, setOverlayState] = useState<"loading" | "success">("loading");
@@ -58,10 +61,20 @@ function PaymentFlowInner() {
     setSelectedPreset(null);
   };
 
-  const handlePay = () => {
+  const handlePay = async () => {
+    if (!customerName.trim() || !email.trim()) { setPaymentError("Veuillez renseigner votre nom et votre adresse e-mail."); return; }
     setShowOverlay(true);
     setOverlayState("loading");
-    setTimeout(() => setOverlayState("success"), 2500);
+    setPaymentError("");
+    try {
+      const response = await fetch("/api/payments/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ amount: currentAmount, email, customer_name: customerName, message, customer_phone: "" }) });
+      const data = await response.json();
+      if (!response.ok || !data.checkout_url) throw new Error(data.error || "Impossible de créer le paiement");
+      window.location.assign(data.checkout_url);
+    } catch (error) {
+      setShowOverlay(false);
+      setPaymentError(error instanceof Error ? error.message : "Une erreur est survenue");
+    }
   };
 
   const goToConfirmation = () => {
@@ -301,6 +314,10 @@ function PaymentFlowInner() {
                 <p className="text-sm mb-4" style={{ color: "#5b403f" }}>
                   Votre message sera visible par Juliet et la communauté.
                 </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                  <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} required placeholder="Votre nom" className="w-full p-3 rounded-lg border outline-none text-sm" style={{ borderColor: "#e4bdbc", backgroundColor: "#fbf9f4" }} />
+                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="Votre e-mail" className="w-full p-3 rounded-lg border outline-none text-sm" style={{ borderColor: "#e4bdbc", backgroundColor: "#fbf9f4" }} />
+                </div>
                 <textarea
                   className="w-full p-4 rounded-lg border outline-none resize-none text-sm mb-5 transition-all"
                   style={{
@@ -408,6 +425,7 @@ function PaymentFlowInner() {
                 </div>
 
                 <div className="flex flex-col gap-3 mt-auto">
+                  {paymentError && <p className="text-sm text-center" style={{ color: "#b20024" }}>{paymentError}</p>}
                   <button
                     disabled={!selectedMethod}
                     onClick={handlePay}
