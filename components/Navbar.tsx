@@ -7,11 +7,6 @@ interface NavbarProps {
   onSupportClick?: () => void;
 }
 
-const NAV_LINKS = [
-  { label: "Explorer", href: "/explore" },
-  { label: "Tableau de bord", href: "/dashboard" },
-];
-
 /* ── Buy Me Data mascot logo ── */
 export function TopUpLogo({ className = "w-8 h-8" }: { className?: string }) {
   return (
@@ -23,16 +18,19 @@ export default function Navbar({ onSupportClick }: NavbarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [search, setSearch] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<{ name: string; email: string; avatar_url?: string | null } | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
-    fetch("/api/auth/session").then((response) => setIsLoggedIn(response.ok)).catch(() => setIsLoggedIn(false));
+    fetch("/api/auth/session", { cache: "no-store" })
+      .then(async (response) => response.ok ? (await response.json()).user : null)
+      .then(setUser)
+      .catch(() => setUser(null));
   }, [pathname]);
 
-  const handleLogout = () => {
-    sessionStorage.removeItem("isLoggedIn");
-    setIsLoggedIn(false);
+  const handleLogout = async () => {
+    await fetch("/api/auth/session", { method: "DELETE" }).catch(() => null);
+    setUser(null);
     setShowDropdown(false);
     router.push("/explore");
   };
@@ -63,55 +61,6 @@ export default function Navbar({ onSupportClick }: NavbarProps) {
             </span>
           </Link>
 
-          {!isAuth && (
-            <div className="hidden md:flex gap-6">
-              <Link href="/explore">
-                <span
-                  className="text-sm font-medium transition-colors duration-200 cursor-pointer pb-1"
-                  style={{
-                    color: pathname === "/explore" ? "#b20024" : "#5b403f",
-                    borderBottom: pathname === "/explore" ? "2px solid #b20024" : "2px solid transparent",
-                    letterSpacing: "0.05em",
-                  }}
-                >
-                  Explorer
-                </span>
-              </Link>
-              {isLoggedIn ? (
-                <Link href="/dashboard">
-                  <span
-                    className="text-sm font-medium transition-colors duration-200 cursor-pointer pb-1"
-                    style={{
-                      color: pathname === "/dashboard" ? "#b20024" : "#5b403f",
-                      borderBottom: pathname === "/dashboard" ? "2px solid #b20024" : "2px solid transparent",
-                      letterSpacing: "0.05em",
-                    }}
-                  >
-                    Tableau de bord
-                  </span>
-                </Link>
-              ) : (
-                <>
-                  <a href="/explore#pourquoi-nous-choisir">
-                    <span
-                      className="text-sm font-medium transition-colors duration-200 cursor-pointer pb-1 hover:text-[#b20024]"
-                      style={{ color: "#5b403f", letterSpacing: "0.05em" }}
-                    >
-                      Pourquoi nous choisir
-                    </span>
-                  </a>
-                  <a href="/explore#faq">
-                    <span
-                      className="text-sm font-medium transition-colors duration-200 cursor-pointer pb-1 hover:text-[#b20024]"
-                      style={{ color: "#5b403f", letterSpacing: "0.05em" }}
-                    >
-                      FAQ
-                    </span>
-                  </a>
-                </>
-              )}
-            </div>
-          )}
         </div>
 
         {/* Right side */}
@@ -181,7 +130,7 @@ export default function Navbar({ onSupportClick }: NavbarProps) {
           )}
 
           {/* Auth State Buttons / Dropdown */}
-          {isLoggedIn ? (
+          {user ? (
             <div className="relative">
               <div
                 onClick={() => setShowDropdown(!showDropdown)}
@@ -189,8 +138,8 @@ export default function Navbar({ onSupportClick }: NavbarProps) {
                 style={{ borderColor: "#e4bdbc" }}
               >
                 <img
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5PXsU07Swjq7Y3mH7tozVZbYHzec6Aw5C2DmaWUfzS98LY35OIcUQS5rc_n8VemuuTVVwfeX1hyqQhBHtwMWEGAr8c_ZB_7XEAkeDZtq9vVb3meq7ZGhD4g0f1F0K0CTH9MlJJLYtDhRsdoXujXgsRZGIli6rVpuje-1XvBP7a1FLMWkxThc9EyWhV2BC8eJWC8_TxNofwvJDlxquJc3R0WjNuA9G7VGUmFYCq-1Vi-ylMlrLGzts10fqUh4bnnoD5L5qNqMs0x8W"
-                  alt="Avatar"
+                  src={user.avatar_url || "/buy-me-data-mascot.png"}
+                  alt={user.name || "Votre profil"}
                   className="w-full h-full object-cover"
                 />
               </div>

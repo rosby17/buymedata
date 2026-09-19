@@ -11,6 +11,8 @@ export default function CreateCampaign() {
   const [deadline, setDeadline] = useState("");
   const [image, setImage] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   const calculateDaysRemaining = (dateStr: string) => {
     if (!dateStr) return "Sans limite";
@@ -34,10 +36,26 @@ export default function CreateCampaign() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate successful creation and redirect
-    router.push("/dashboard");
+    setSaving(true);
+    setError("");
+    try {
+      const response = await fetch("/api/campaigns", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ title, description, target_amount: amount }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (response.status === 401) { router.push("/login"); return; }
+      if (!response.ok) throw new Error(payload.error || "Création impossible");
+      router.push("/dashboard");
+      router.refresh();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Création impossible");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -64,7 +82,8 @@ export default function CreateCampaign() {
           <div className="flex items-center">
             {/* Action button on mobile header, hidden on desktop */}
             <button
-              onClick={handleSubmit}
+              onClick={() => document.querySelector<HTMLFormElement>("form")?.requestSubmit()}
+              disabled={saving}
               className="md:hidden text-white font-bold text-xs px-4 py-2 rounded-full transition-all active:scale-95"
               style={{ backgroundColor: "#b20024" }}
             >
@@ -93,6 +112,7 @@ export default function CreateCampaign() {
                 Détails de la cagnotte
               </h2>
               <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+                {error && <p className="rounded-xl bg-[#fff2f1] px-4 py-3 text-sm font-semibold text-[#8e001d]">{error}</p>}
                 {/* Image Upload */}
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-bold uppercase tracking-wider text-[#5b403f]">
@@ -168,6 +188,8 @@ export default function CreateCampaign() {
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                         placeholder="50000"
+                        required
+                        min={1000}
                         className="w-full bg-[#fbf9f4] border focus:ring-1 focus:ring-[#b20024] rounded-xl pl-16 pr-4 py-3.5 text-sm outline-none transition-all"
                         style={{ borderColor: "#e4bdbc" }}
                       />
@@ -229,10 +251,11 @@ export default function CreateCampaign() {
                 <div className="hidden md:flex justify-end mt-4">
                   <button
                     type="submit"
+                    disabled={saving}
                     className="text-white font-bold text-base px-8 py-3.5 rounded-xl transition-all hover:opacity-90 active:scale-95 shadow-md"
                     style={{ backgroundColor: "#b20024" }}
                   >
-                    Publier la cagnotte
+                    {saving ? "Publication…" : "Publier la cagnotte"}
                   </button>
                 </div>
               </form>
@@ -253,8 +276,7 @@ export default function CreateCampaign() {
               <div className="w-full h-48 bg-[#f5f3ee] relative overflow-hidden group">
                 <img
                   src={
-                    image ||
-                    "https://lh3.googleusercontent.com/aida-public/AB6AXuDGhE4VTZXTZOba_oaWAcqpIWtv9gmpEWkidnAc_zeJHZXLMUSFv7oOICMThQCwR4Y6OXYrZ7oBXNQdBtx8eKjO3cdkQtYFQW7k-bvubtnXgVwWd9XQ8fdwf0TvH280cUBC0yXrP9CH1x1Ro-txtcgdKgoi4YLx_mJfadh25WX3egRXf1TlGkLFtFxQBcKi4-LCP8JNIku7vQgTusS63u3dsKf7mvAQ8OMnyZ6jKDLWDqRNz0mQKCYNEs-9ZG_TZD-5DqoRfQRYoTED"
+                    image || "/buy-me-data-mascot.png"
                   }
                   alt="Preview Image"
                   className="w-full h-full object-cover"
@@ -299,7 +321,7 @@ export default function CreateCampaign() {
                   <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: "#c8e9c1" }}>
                     <div
                       className="h-full rounded-full transition-all duration-500 ease-out"
-                      style={{ width: "15%", backgroundColor: "#496546" }}
+                      style={{ width: "0%", backgroundColor: "#496546" }}
                     ></div>
                   </div>
                   <div className="flex justify-between items-center mt-2 text-xs font-semibold text-[#5b403f]">
@@ -330,11 +352,12 @@ export default function CreateCampaign() {
         style={{ borderColor: "#e4bdbc" }}
       >
         <button
-          onClick={handleSubmit}
+          onClick={() => document.querySelector<HTMLFormElement>("form")?.requestSubmit()}
+          disabled={saving}
           className="w-full text-white font-bold py-4 rounded-full transition-all active:scale-95 duration-100 shadow-md"
           style={{ backgroundColor: "#b20024" }}
         >
-          Publier la cagnotte
+          {saving ? "Publication…" : "Publier la cagnotte"}
         </button>
       </div>
     </div>

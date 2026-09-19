@@ -6,7 +6,7 @@ import { query } from "@/lib/db";
 export async function GET() {
   const userId = await currentUserId();
   if (!userId) return Response.json({ user: null }, { status: 401 });
-  const result = await query<{ id: string; email: string; name: string; role: string }>("SELECT id, email, full_name AS name, role FROM profiles WHERE id = $1", [userId]);
+  const result = await query<{ id: string; email: string; name: string; role: string; avatar_url: string | null; username: string | null }>("SELECT id, email, full_name AS name, role, avatar_url, username FROM profiles WHERE id = $1", [userId]);
   const user = result.rows[0];
   return user ? Response.json({ user }) : Response.json({ user: null }, { status: 401 });
 }

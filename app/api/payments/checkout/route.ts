@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import crypto from "node:crypto";
 import { createCheckout, WarapPayError } from "@/lib/warappay";
 import { query, withTransaction } from "@/lib/db";
+import { currentUserId } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -16,19 +17,27 @@ export async function POST(request: NextRequest) {
     }
     const orderId = crypto.randomUUID();
     const creatorId = String(body.creator_id || "");
+    const campaignId = body.campaign_id ? String(body.campaign_id) : null;
+    const amount = Math.round(Number(body.amount));
     if (!creatorId) return Response.json({ error: "creator_id is required" }, { status: 400 });
+    if (!Number.isFinite(amount) || amount < 100) return Response.json({ error: "Le montant minimum est de 100 FCFA" }, { status: 400 });
     const creator = await query("SELECT id FROM profiles WHERE id = $1 AND role = 'creator'", [creatorId]);
     if (!creator.rows[0]) return Response.json({ error: "Creator not found" }, { status: 404 });
+    if (campaignId) {
+      const campaign = await query("SELECT id FROM campaigns WHERE id = $1 AND creator_id = $2 AND status = 'active'", [campaignId, creatorId]);
+      if (!campaign.rows[0]) return Response.json({ error: "Cagnotte introuvable ou inactive" }, { status: 404 });
+    }
+    const supporterId = await currentUserId();
     await withTransaction(async (client) => {
-      await client.query(`INSERT INTO orders (id, creator_id, email, customer_name, customer_phone, amount, message, status) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')`, [orderId, creatorId, String(body.email), String(body.customer_name), body.customer_phone ? String(body.customer_phone) : null, Number(body.amount), body.message ? String(body.message) : null]);
+      await client.query(`INSERT INTO orders (id, creator_id, campaign_id, supporter_id, email, customer_name, customer_phone, amount, message, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending')`, [orderId, creatorId, campaignId, supporterId, String(body.email).trim().toLowerCase(), String(body.customer_name).trim(), body.customer_phone ? String(body.customer_phone) : null, amount, body.message ? String(body.message).trim().slice(0, 500) : null]);
     });
     const result = await createCheckout({
       product_code: productCode,
       email: String(body.email),
       customer_name: String(body.customer_name),
       customer_phone: body.customer_phone ? String(body.customer_phone) : undefined,
-      redirect_url: `${origin}/merci?order_id=${orderId}&amount=${encodeURIComponent(String(body.amount))}`,
-      meta: { order_id: orderId, amount: String(body.amount) },
+      redirect_url: `${origin}/merci?order_id=${orderId}`,
+      meta: { order_id: orderId, creator_id: creatorId, amount: String(amount) },
     });
     await queryPayment(orderId, result);
     return Response.json({ ...result, order_id: orderId });

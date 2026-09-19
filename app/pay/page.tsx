@@ -4,17 +4,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
-const MOBILE_METHODS = [
-  { id: "orange", label: "Orange Money", bg: "#FF7900", text: "#fff", abbr: "O" },
-  { id: "mtn", label: "MTN MoMo", bg: "#FFCC00", text: "#004F9F", abbr: "MTN" },
-  { id: "moov", label: "Moov Money", bg: "#0057A0", text: "#fff", abbr: "M" },
-];
-
-const OTHER_METHODS = [
-  { id: "card", icon: "credit_card", label: "Carte Bancaire (Visa/Mastercard)" },
-  { id: "paypal", icon: "account_balance_wallet", label: "PayPal" },
-];
-
 const PRESET_AMOUNTS = [1000, 5000, 10000];
 
 const STEPS = [
@@ -30,7 +19,8 @@ function PaymentFlowInner() {
   const initialAmount = parseInt(searchParams.get("amount") || "0") || 0;
   const initialMessage = decodeURIComponent(searchParams.get("message") || "");
   const creatorId = searchParams.get("creator_id") || "";
-  const [creator, setCreator] = useState<{name:string;avatar_url?:string;category?:string}|null>(null);
+  const campaignId = searchParams.get("campaign_id") || "";
+  const [creator, setCreator] = useState<{name:string;avatar_url?:string;category?:string;campaigns?:Array<{id:string;title:string}>}|null>(null);
 
   const [step, setStep] = useState(1);
   const [currentAmount, setCurrentAmount] = useState(initialAmount);
@@ -44,9 +34,7 @@ function PaymentFlowInner() {
   const [customerName, setCustomerName] = useState("");
   const [email, setEmail] = useState("");
   const [paymentError, setPaymentError] = useState("");
-  const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [showOverlay, setShowOverlay] = useState(false);
-  const [overlayState, setOverlayState] = useState<"loading" | "success">("loading");
 
   useEffect(() => {
     if (!creatorId) return;
@@ -71,10 +59,9 @@ function PaymentFlowInner() {
   const handlePay = async () => {
     if (!customerName.trim() || !email.trim()) { setPaymentError("Veuillez renseigner votre nom et votre adresse e-mail."); return; }
     setShowOverlay(true);
-    setOverlayState("loading");
     setPaymentError("");
     try {
-      const response = await fetch("/api/payments/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ creator_id: creatorId, amount: currentAmount, email, customer_name: customerName, message, customer_phone: "" }) });
+      const response = await fetch("/api/payments/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ creator_id: creatorId, campaign_id: campaignId || undefined, amount: currentAmount, email, customer_name: customerName, message, customer_phone: "" }) });
       const data = await response.json();
       if (!response.ok || !data.checkout_url) throw new Error(data.error || "Impossible de créer le paiement");
       window.location.assign(data.checkout_url);
@@ -82,10 +69,6 @@ function PaymentFlowInner() {
       setShowOverlay(false);
       setPaymentError(error instanceof Error ? error.message : "Une erreur est survenue");
     }
-  };
-
-  const goToConfirmation = () => {
-    router.push(`/merci?amount=${currentAmount}&method=${selectedMethod || "card"}`);
   };
 
   const goBack = () => router.push("/");
@@ -125,7 +108,7 @@ function PaymentFlowInner() {
                 </div>
                 <h2 className="text-2xl font-semibold" style={{ color: "#1b1c19" }}>{creator?.name || "Créateur"}</h2>
                 <p className="text-sm mt-1" style={{ color: "#5b403f" }}>
-                  Créatrice digitale &amp; Formatrice Tech
+                  {creator?.category || "Créateur de contenu"}
                 </p>
               </div>
 
@@ -368,73 +351,16 @@ function PaymentFlowInner() {
             {/* ── Step 3: Payment Method ── */}
             {step === 3 && (
               <div className="flex-grow flex flex-col">
-                <h3 className="text-2xl font-semibold mb-1" style={{ color: "#1b1c19" }}>
-                  Choisir le mode de paiement
-                </h3>
-                <p className="text-sm mb-5" style={{ color: "#5b403f" }}>
-                  Privilégiez le Mobile Money pour des frais réduits.
-                </p>
-
-                {/* Mobile Money */}
-                <div className="grid grid-cols-3 gap-4 mb-4">
-                  {MOBILE_METHODS.map((m) => (
-                    <button
-                      key={m.id}
-                      onClick={() => setSelectedMethod(m.id)}
-                      className="border-2 rounded-xl p-4 flex flex-col items-center gap-2 transition-all"
-                      style={{
-                        borderColor: selectedMethod === m.id ? "#b20024" : "#e4bdbc",
-                        backgroundColor: selectedMethod === m.id ? "#fff2f1" : "transparent",
-                        boxShadow:
-                          selectedMethod === m.id
-                            ? "0px 4px 12px rgba(178,0,36,0.1)"
-                            : "none",
-                      }}
-                    >
-                      <div
-                        className="w-12 h-12 rounded-lg flex items-center justify-center font-bold text-sm"
-                        style={{ backgroundColor: m.bg, color: m.text }}
-                      >
-                        {m.abbr}
-                      </div>
-                      <span className="text-xs font-medium uppercase tracking-wider" style={{ color: "#1b1c19" }}>
-                        {m.label}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Other methods */}
-                <div className="space-y-3 mb-5">
-                  {OTHER_METHODS.map((m) => (
-                    <button
-                      key={m.id}
-                      onClick={() => setSelectedMethod(m.id)}
-                      className="w-full border rounded-lg p-3 flex justify-between items-center transition-all"
-                      style={{
-                        borderColor: selectedMethod === m.id ? "#b20024" : "#e4bdbc",
-                        backgroundColor: selectedMethod === m.id ? "#fff2f1" : "transparent",
-                      }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="material-symbols-outlined" style={{ color: "#5b403f" }}>
-                          {m.icon}
-                        </span>
-                        <span className="text-sm font-medium" style={{ color: "#1b1c19" }}>
-                          {m.label}
-                        </span>
-                      </div>
-                      <span className="material-symbols-outlined" style={{ fontSize: "18px", opacity: 0.3 }}>
-                        chevron_right
-                      </span>
-                    </button>
-                  ))}
+                <h3 className="text-2xl font-semibold mb-1" style={{ color: "#1b1c19" }}>Paiement sécurisé</h3>
+                <p className="text-sm mb-5" style={{ color: "#5b403f" }}>Vous serez redirigé vers WaraPay pour choisir un moyen réellement disponible et valider le paiement.</p>
+                <div className="mb-5 flex items-center gap-4 rounded-xl border border-[#e4bdbc] bg-[#fbf9f4] p-5">
+                  <span className="material-symbols-outlined rounded-full bg-[#edf6ee] p-3 text-[#496546]">verified_user</span>
+                  <div><p className="font-bold text-[#1b1c19]">WaraPay</p><p className="mt-1 text-xs text-[#5b403f]">Mobile Money et autres moyens proposés sur la page de paiement.</p></div>
                 </div>
 
                 <div className="flex flex-col gap-3 mt-auto">
                   {paymentError && <p className="text-sm text-center" style={{ color: "#b20024" }}>{paymentError}</p>}
                   <button
-                    disabled={!selectedMethod}
                     onClick={handlePay}
                     className="w-full py-4 rounded-lg text-xl font-semibold shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
                     style={{ backgroundColor: "#b20024", color: "#ffffff" }}
@@ -465,7 +391,6 @@ function PaymentFlowInner() {
             className="rounded-xl p-8 max-w-sm w-full text-center shadow-2xl mx-4"
             style={{ backgroundColor: "#fbf9f4" }}
           >
-            {overlayState === "loading" ? (
               <>
                 <div className="mb-6 flex justify-center">
                   <div
@@ -483,39 +408,9 @@ function PaymentFlowInner() {
                   Traitement en cours…
                 </h3>
                 <p className="text-sm" style={{ color: "#5b403f" }}>
-                  Veuillez valider l&apos;opération sur votre téléphone.
+                  Préparation de votre redirection sécurisée vers WaraPay.
                 </p>
               </>
-            ) : (
-              <>
-                <div className="mb-6 animate-pop-in flex justify-center">
-                  <span
-                    className="material-symbols-outlined"
-                    style={{
-                      fontSize: "64px",
-                      color: "#496546",
-                      fontVariationSettings: "'FILL' 1",
-                    }}
-                  >
-                    check_circle
-                  </span>
-                </div>
-                <h3 className="text-2xl font-semibold mb-2" style={{ color: "#1b1c19" }}>
-                  Paiement réussi !
-                </h3>
-                <p className="text-sm mb-6" style={{ color: "#5b403f" }}>
-                  Le créateur a bien reçu{" "}
-                  <strong>{currentAmount.toLocaleString("fr-FR")} FCFA</strong>. Merci !
-                </p>
-                <button
-                  onClick={goToConfirmation}
-                  className="w-full py-3 rounded-lg text-sm font-bold active:scale-95 transition-all"
-                  style={{ backgroundColor: "#b20024", color: "#ffffff" }}
-                >
-                  Voir ma confirmation →
-                </button>
-              </>
-            )}
           </div>
         </div>
       )}

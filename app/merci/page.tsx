@@ -1,335 +1,62 @@
 "use client";
-import { useEffect, useState, Suspense } from "react";
+
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
-const METHOD_LABELS: Record<string, string> = {
-  orange: "Orange Money",
-  mtn: "MTN MoMo",
-  moov: "Moov Money",
-  card: "Carte Bancaire",
-  paypal: "PayPal",
+type Order = {
+  id: string; amount: number | string; currency: string; status: "pending"|"waiting_payment"|"completed"|"failed"|"refunded";
+  created_at: string; provider?: string; creator_id: string; creator_name: string; creator_avatar?: string;
+  creator_category?: string; campaign_title?: string;
 };
 
-const CONFETTI_COLORS = [
-  "#b20024", "#d62839", "#496546", "#c8e9c1",
-  "#ffdad8", "#FFCC00", "#FF7900",
-];
-
-function ConfettiEffect() {
-  const [pieces, setPieces] = useState<
-    Array<{ id: number; style: React.CSSProperties }>
-  >([]);
-
-  useEffect(() => {
-    const items = Array.from({ length: 70 }, (_, i) => ({
-      id: i,
-      style: {
-        left: `${Math.random() * 100}vw`,
-        top: `-${Math.random() * 20 + 10}px`,
-        backgroundColor:
-          CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
-        width: `${Math.random() * 10 + 5}px`,
-        height: `${Math.random() * 12 + 5}px`,
-        borderRadius: Math.random() > 0.5 ? "50%" : "2px",
-        animationDuration: `${Math.random() * 3 + 2}s`,
-        animationDelay: `${Math.random() * 2}s`,
-      } as React.CSSProperties,
-    }));
-    setPieces(items);
-  }, []);
-
-  return (
-    <>
-      {pieces.map((p) => (
-        <div key={p.id} className="confetti-piece" style={p.style} />
-      ))}
-    </>
-  );
-}
-
 function ConfirmationInner() {
-  const searchParams = useSearchParams();
-  const amount = parseInt(searchParams.get("amount") || "0") || 0;
-  const method = searchParams.get("method") || "card";
-  const methodLabel = METHOD_LABELS[method] || method;
-
-  const [visible, setVisible] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
+  const orderId = useSearchParams().get("order_id") || "";
+  const [order, setOrder] = useState<Order | null>(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const t1 = setTimeout(() => setVisible(true), 100);
-    const t2 = setTimeout(() => setShowConfetti(true), 200);
-    const t3 = setTimeout(() => setShowConfetti(false), 5500);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, []);
+    if (!orderId) return;
+    let active = true;
+    let timer: ReturnType<typeof setTimeout>;
+    const load = async () => {
+      try {
+        const response = await fetch(`/api/orders/${encodeURIComponent(orderId)}`, { cache: "no-store" });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || "Commande introuvable");
+        if (!active) return;
+        setOrder(payload.order);
+        if (["pending", "waiting_payment"].includes(payload.order.status)) timer = setTimeout(load, 3000);
+      } catch (cause) { if (active) setError(cause instanceof Error ? cause.message : "Vérification impossible"); }
+    };
+    load();
+    return () => { active = false; clearTimeout(timer); };
+  }, [orderId]);
 
-  const orderId = searchParams.get("order_id") || "";
+  if (!orderId || error) return <><Navbar/><main className="mx-auto max-w-xl px-5 py-24 text-center"><h1 className="text-2xl font-bold">Confirmation indisponible</h1><p className="mt-3 text-sm text-[#6f5a57]">{error || "Référence de commande manquante."}</p><Link href="/explore" className="mt-6 inline-block rounded-xl bg-[#b20024] px-5 py-3 text-sm font-bold text-white">Retour à Explorer</Link></main><Footer/></>;
+  if (!order) return <><Navbar/><main className="mx-auto max-w-xl px-5 py-24 text-center text-sm text-[#6f5a57]">Vérification du paiement…</main><Footer/></>;
 
-  const now = new Date().toLocaleString("fr-FR", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const completed = order.status === "completed";
+  const failed = order.status === "failed" || order.status === "refunded";
+  const amount = Number(order.amount);
+  const title = completed ? "Paiement confirmé" : failed ? "Paiement non finalisé" : "Paiement en cours de confirmation";
+  const statusText = completed ? "Confirmé" : failed ? (order.status === "refunded" ? "Remboursé" : "Échoué") : "En attente";
+  const tone = completed ? "#496546" : failed ? "#b20024" : "#9a6200";
 
-  const shareText = `Je viens de soutenir un créateur avec ${amount.toLocaleString("fr-FR")} FCFA sur Buy Me Data.`;
-  const shareUrl = typeof window !== "undefined" ? window.location.origin : "https://buymedata.tools-cl.com";
-
-  const shareActions = [
-    {
-      label: "Twitter / X",
-      icon: "share",
-      color: "#000",
-      onClick: () =>
-        window.open(
-          `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`,
-          "_blank"
-        ),
-    },
-    {
-      label: "WhatsApp",
-      icon: "chat",
-      color: "#25D366",
-      onClick: () =>
-        window.open(
-          `https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`,
-          "_blank"
-        ),
-    },
-    {
-      label: "Facebook",
-      icon: "thumb_up",
-      color: "#1877F2",
-      onClick: () =>
-        window.open(
-          `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
-          "_blank"
-        ),
-    },
-  ];
-
-  const receiptRows = [
-    { label: "Référence", value: orderId || "En cours de confirmation" },
-    { label: "Date", value: now },
-    { label: "Méthode", value: methodLabel },
-    {
-      label: "Frais plateforme",
-      value: `${Math.round(amount * 0.10).toLocaleString("fr-FR")} FCFA (10%)`,
-    },
-    {
-      label: "Le créateur reçoit",
-      value: `${Math.round(amount * 0.90).toLocaleString("fr-FR")} FCFA`,
-      highlight: true,
-    },
-  ];
-
-  return (
-    <>
-      <Navbar />
-      {showConfetti && <ConfettiEffect />}
-
-      <main
-        className="flex-grow flex items-center justify-center px-4 py-12"
-        style={{ backgroundColor: "#fbf9f4" }}
-      >
-        <div
-          className="w-full text-center"
-          style={{
-            maxWidth: "600px",
-            opacity: visible ? 1 : 0,
-            transform: visible ? "translateY(0)" : "translateY(24px)",
-            transition: "opacity 0.6s ease, transform 0.6s ease",
-          }}
-        >
-          {/* ── Success icon ── */}
-          <div
-            className="relative inline-flex items-center justify-center w-28 h-28 rounded-full mb-8"
-            style={{ backgroundColor: "#c8e9c1" }}
-          >
-            {/* Pulse rings */}
-            {[0, 0.5].map((delay) => (
-              <div
-                key={delay}
-                className="absolute inset-0 rounded-full"
-                style={{
-                  animation: `pulse-ring 1.8s ease-out ${delay}s infinite`,
-                  backgroundColor: "rgba(73,101,70,0.2)",
-                }}
-              />
-            ))}
-            <span
-              className="material-symbols-outlined relative z-10"
-              style={{
-                fontSize: "56px",
-                color: "#496546",
-                fontVariationSettings: "'FILL' 1",
-              }}
-            >
-              check_circle
-            </span>
-          </div>
-
-          <h1
-            className="text-3xl md:text-4xl font-bold mb-3"
-            style={{ color: "#1b1c19", letterSpacing: "-0.02em" }}
-          >
-            Merci pour votre soutien ! 🎉
-          </h1>
-          <p className="text-base mb-8" style={{ color: "#5b403f" }}>
-            Votre contribution aide le créateur à continuer de créer du contenu de
-            qualité pour la communauté.
-          </p>
-
-          {/* ── Receipt Card ── */}
-          <div
-            className="rounded-xl border p-6 mb-6 text-left card-shadow"
-            style={{ backgroundColor: "#ffffff", borderColor: "#e4bdbc" }}
-          >
-            {/* Creator row */}
-            <div
-              className="flex items-center gap-4 pb-5 mb-5 border-b"
-              style={{ borderColor: "#f0eee9" }}
-            >
-              <div
-                className="w-14 h-14 rounded-full overflow-hidden border-2 shrink-0"
-                style={{ borderColor: "#b20024" }}
-              >
-                <img
-                  src="/buy-me-data-mascot.png"
-                  alt="Créateur"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div>
-                <div className="flex items-center gap-1">
-                  <span className="font-semibold text-lg" style={{ color: "#1b1c19" }}>
-                    Créateur
-                  </span>
-                  <span
-                    className="material-symbols-outlined text-base"
-                    style={{ color: "#496546", fontVariationSettings: "'FILL' 1" }}
-                  >
-                    verified
-                  </span>
-                </div>
-                <p className="text-xs" style={{ color: "#5b403f" }}>
-                  Créatrice digitale &amp; Formatrice Tech
-                </p>
-              </div>
-              <div className="ml-auto text-right">
-                <span className="block text-2xl font-bold" style={{ color: "#b20024" }}>
-                  {amount.toLocaleString("fr-FR")} FCFA
-                </span>
-                <span
-                  className="inline-block text-xs px-2 py-1 rounded-full font-medium mt-1"
-                  style={{ backgroundColor: "#c8e9c1", color: "#496546" }}
-                >
-                  ✓ Confirmé
-                </span>
-              </div>
-            </div>
-
-            {/* Details */}
-            <div>
-              {receiptRows.map((row, i) => (
-                <div
-                  key={row.label}
-                  className="flex justify-between items-center py-2"
-                  style={{
-                    borderBottom:
-                      i < receiptRows.length - 1 ? "1px solid #f0eee9" : "none",
-                  }}
-                >
-                  <span
-                    className="text-xs font-medium uppercase tracking-wider"
-                    style={{ color: "#906f6e" }}
-                  >
-                    {row.label}
-                  </span>
-                  <span
-                    className="text-sm font-semibold"
-                    style={{ color: row.highlight ? "#496546" : "#1b1c19" }}
-                  >
-                    {row.value}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ── Share Box ── */}
-          <div
-            className="rounded-xl border p-5 mb-6"
-            style={{ backgroundColor: "#f5f3ee", borderColor: "#e4bdbc" }}
-          >
-            <p className="text-sm font-medium mb-4" style={{ color: "#1b1c19" }}>
-              🙌 Partagez votre soutien et inspirez d&apos;autres personnes !
-            </p>
-            <div className="flex gap-3 justify-center flex-wrap">
-              {shareActions.map((s) => (
-                <button
-                  key={s.label}
-                  onClick={s.onClick}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all active:scale-95 hover:opacity-85"
-                  style={{ backgroundColor: s.color, color: "#fff" }}
-                >
-                  <span className="material-symbols-outlined text-base">{s.icon}</span>
-                  {s.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* ── Action buttons ── */}
-          <div className="flex gap-4 justify-center flex-wrap mb-8">
-            <Link href="/">
-              <button
-                className="px-8 py-3 rounded-xl text-sm font-medium border transition-all hover:opacity-80 active:scale-95"
-                style={{
-                  borderColor: "#b20024",
-                  color: "#b20024",
-                  backgroundColor: "transparent",
-                }}
-              >
-                ← Retour au profil
-              </button>
-            </Link>
-            <Link href="/pay">
-              <button
-                className="px-8 py-3 rounded-xl text-sm font-medium shadow-md transition-all hover:opacity-90 active:scale-95"
-                style={{ backgroundColor: "#b20024", color: "#ffffff" }}
-              >
-                Soutenir à nouveau
-              </button>
-            </Link>
-          </div>
-
-          {/* Footer note */}
-          <p className="text-xs" style={{ color: "#906f6e" }}>
-            Un reçu a été envoyé à votre adresse email. Merci de faire partie de
-            la communauté Buy Me Data ⚡💙
-          </p>
-        </div>
-      </main>
-      <Footer />
-    </>
-  );
+  return <><Navbar/><main className="min-h-[70vh] bg-[#fbf9f4] px-4 py-12"><div className="mx-auto max-w-xl text-center">
+    <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full" style={{backgroundColor:completed?"#c8e9c1":failed?"#ffdad8":"#fff0c7",color:tone}}><span className="material-symbols-outlined text-5xl">{completed?"check_circle":failed?"error":"hourglass_top"}</span></div>
+    <h1 className="mt-6 text-3xl font-bold text-[#1b1c19]">{title}</h1>
+    <p className="mt-3 text-sm leading-6 text-[#6f5a57]">{completed?`Votre soutien à ${order.creator_name} est bien enregistré.`:failed?"Aucun soutien n’a été comptabilisé. Vous pouvez réessayer.":"Nous attendons la confirmation de WaraPay. Cette page se met à jour automatiquement."}</p>
+    <section className="mt-8 rounded-2xl border border-[#ead6d2] bg-white p-6 text-left shadow-sm">
+      <div className="flex items-center gap-4 border-b border-[#f0e8e5] pb-5"><img src={order.creator_avatar||"/buy-me-data-mascot.png"} alt={order.creator_name} className="h-14 w-14 rounded-2xl bg-[#fff2f1] object-cover"/><div className="min-w-0"><p className="truncate font-bold">{order.creator_name}</p><p className="text-xs text-[#6f5a57]">{order.campaign_title||order.creator_category||"Créateur de contenu"}</p></div><p className="ml-auto whitespace-nowrap text-xl font-bold text-[#b20024]">{amount.toLocaleString("fr-FR")} FCFA</p></div>
+      <dl className="mt-4 space-y-3 text-sm"><Row label="Statut" value={statusText} color={tone}/><Row label="Référence" value={order.id}/><Row label="Date" value={new Date(order.created_at).toLocaleString("fr-FR")}/><Row label="Prestataire" value={order.provider||"WaraPay"}/></dl>
+    </section>
+    <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row"><Link href="/explore" className="rounded-xl border border-[#b20024] px-5 py-3 text-sm font-bold text-[#b20024]">Explorer</Link><Link href={`/pay?creator_id=${order.creator_id}`} className="rounded-xl bg-[#b20024] px-5 py-3 text-sm font-bold text-white">{failed?"Réessayer":"Soutenir à nouveau"}</Link></div>
+  </div></main><Footer/></>;
 }
 
-export default function ConfirmationPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center" style={{ color: "#5b403f" }}>
-          Chargement…
-        </div>
-      }
-    >
-      <ConfirmationInner />
-    </Suspense>
-  );
-}
+function Row({label,value,color}:{label:string;value:string;color?:string}) { return <div className="flex items-start justify-between gap-5"><dt className="text-[#7b6864]">{label}</dt><dd className="break-all text-right font-semibold" style={{color:color||"#1b1c19"}}>{value}</dd></div>; }
+
+export default function ConfirmationPage() { return <Suspense fallback={<div className="min-h-screen grid place-items-center text-[#6f5a57]">Chargement…</div>}><ConfirmationInner/></Suspense>; }
