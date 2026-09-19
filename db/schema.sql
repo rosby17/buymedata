@@ -88,6 +88,8 @@ CREATE TABLE IF NOT EXISTS withdrawals (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   creator_id UUID NOT NULL REFERENCES profiles(id),
   amount BIGINT NOT NULL CHECK (amount > 0),
+  fee_amount BIGINT NOT NULL DEFAULT 0 CHECK (fee_amount >= 0),
+  net_amount BIGINT NOT NULL DEFAULT 0 CHECK (net_amount >= 0),
   currency TEXT NOT NULL DEFAULT 'XOF',
   method TEXT NOT NULL CHECK (method IN ('mobile_money', 'crypto')),
   destination TEXT NOT NULL,
@@ -105,3 +107,6 @@ ALTER TABLE profiles ADD COLUMN IF NOT EXISTS username TEXT UNIQUE;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS bio TEXT;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS category TEXT;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE withdrawals ADD COLUMN IF NOT EXISTS fee_amount BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE withdrawals ADD COLUMN IF NOT EXISTS net_amount BIGINT NOT NULL DEFAULT 0;
+UPDATE withdrawals SET net_amount = amount WHERE net_amount = 0 AND amount > 0;

@@ -1,6 +1,9 @@
 import { query, withTransaction } from "@/lib/db";
 import { currentUserId } from "@/lib/auth";
 
+// Double the reference 5% platform fee and 0.5% payout fee: 11% total.
+export const WITHDRAWAL_FEE_RATE = 0.11;
+
 export async function GET() {
   const userId = await currentUserId();
   if (!userId) return Response.json({ error: "Authentication required" }, { status: 401 });
@@ -16,7 +19,7 @@ export async function GET() {
     query("SELECT COALESCE(SUM(amount) FILTER (WHERE status = 'completed'), 0)::bigint AS collected, COUNT(*) FILTER (WHERE status = 'completed')::int AS supporters FROM orders WHERE creator_id = $1", [userId]),
     query("SELECT id, customer_name AS name, message, amount, created_at FROM orders WHERE creator_id = $1 ORDER BY created_at DESC LIMIT 20", [userId]),
     query("SELECT id, title, target_amount AS total, collected_amount AS current, status FROM campaigns WHERE creator_id = $1 ORDER BY created_at DESC", [userId]),
-    query("SELECT id, amount, method, destination, status, created_at FROM withdrawals WHERE creator_id = $1 ORDER BY created_at DESC LIMIT 10", [userId]),
+    query("SELECT id, amount, fee_amount, net_amount, method, destination, status, created_at FROM withdrawals WHERE creator_id = $1 ORDER BY created_at DESC LIMIT 10", [userId]),
   ]);
   const paidOut = withdrawals.rows.filter((row) => ["pending", "processing", "paid"].includes(row.status)).reduce((sum, row) => sum + Number(row.amount), 0);
   return Response.json({ mode: "creator", stats: { ...totals.rows[0], available: Math.max(0, Number(totals.rows[0].collected) - paidOut) }, activity: activity.rows, campaigns: campaigns.rows, withdrawals: withdrawals.rows });
@@ -31,6 +34,10 @@ export async function POST(request: Request) {
   const method = body.method === "crypto" ? "crypto" : "mobile_money";
   const destination = String(body.destination || "").trim();
   if (!destination) return Response.json({ error: "Destination requise" }, { status: 400 });
+  const grossAmount = Math.round(amount);
+  const feeAmount = Math.ceil(grossAmount * WITHDRAWAL_FEE_RATE);
+  const netAmount = grossAmount - feeAmount;
+  if (netAmount <= 0) return Response.json({ error: "Montant net invalide" }, { status: 400 });
   const withdrawal = await withTransaction(async (client) => {
     await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [userId]);
     const owner = await client.query("SELECT role FROM profiles WHERE id=$1", [userId]);
@@ -39,7 +46,7 @@ export async function POST(request: Request) {
       COALESCE((SELECT SUM(amount) FROM orders WHERE creator_id=$1 AND status='completed'),0) -
       COALESCE((SELECT SUM(amount) FROM withdrawals WHERE creator_id=$1 AND status IN ('pending','processing','paid')),0) AS available`, [userId]);
     if (amount > Number(balance.rows[0].available)) throw new Error("INSUFFICIENT_BALANCE");
-    const result = await client.query("INSERT INTO withdrawals (creator_id, amount, method, destination) VALUES ($1, $2, $3, $4) RETURNING *", [userId, Math.round(amount), method, destination]);
+    const result = await client.query("INSERT INTO withdrawals (creator_id, amount, fee_amount, net_amount, method, destination) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *", [userId, grossAmount, feeAmount, netAmount, method, destination]);
     return result.rows[0];
   }).catch((error) => {
     if (String(error).includes("CREATOR_REQUIRED")) return null;
@@ -48,5 +55,5 @@ export async function POST(request: Request) {
   });
   if (withdrawal === null) return Response.json({ error: "Seuls les créateurs peuvent demander un retrait" }, { status: 403 });
   if (withdrawal === false) return Response.json({ error: "Solde disponible insuffisant" }, { status: 400 });
-  return Response.json({ withdrawal }, { status: 201 });
+  return Response.json({ withdrawal, fees: { rate: WITHDRAWAL_FEE_RATE, amount: feeAmount, net: netAmount } }, { status: 201 });
 }
