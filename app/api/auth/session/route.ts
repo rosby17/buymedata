@@ -16,11 +16,12 @@ export async function POST(request: Request) {
   const email = String(body.email || "").trim().toLowerCase();
   const password = String(body.password || "");
   const name = String(body.name || "").trim();
+  const role = body.role === "supporter" ? "supporter" : "creator";
   if (!email || !password || password.length < 8) return Response.json({ error: "Email and password (8+ chars) are required" }, { status: 400 });
   if (body.register) {
     const id = crypto.randomUUID();
     try {
-      await query("INSERT INTO profiles (id, email, full_name) VALUES ($1, $2, $3)", [id, email, name || email.split("@")[0]]);
+      await query("INSERT INTO profiles (id, email, full_name, role) VALUES ($1, $2, $3, $4)", [id, email, name || email.split("@")[0], role]);
       await query("INSERT INTO auth_credentials (user_id, password_hash) VALUES ($1, $2)", [id, hashPassword(password)]);
     } catch (error: unknown) {
       if (String(error).includes("duplicate key")) return Response.json({ error: "An account already exists" }, { status: 409 });

@@ -7,22 +7,24 @@ import { TopUpLogo } from "@/components/Navbar";
 export default function SignupPage() {
   const router = useRouter();
   const [role, setRole] = useState<"creator" | "supporter">("creator");
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email || !password) {
+    if (!email || !password || !confirmPassword) {
       setError("Veuillez remplir tous les champs");
       return;
     }
+    if (password.length < 8) { setError("Le mot de passe doit contenir au moins 8 caractères"); return; }
+    if (password !== confirmPassword) { setError("Les mots de passe ne correspondent pas"); return; }
     setLoading(true);
     setError("");
     try {
-      const response = await fetch("/api/auth/session", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email, password, name, register: true }) });
+      const response = await fetch("/api/auth/session", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email, password, role, register: true }) });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "Inscription impossible");
       sessionStorage.setItem("isLoggedIn", "true");
@@ -115,34 +117,6 @@ export default function SignupPage() {
 
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-[#5b403f]">
-                Nom Complet ou Pseudo
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <span className="material-symbols-outlined text-[#5b403f] text-[20px]">person</span>
-                </div>
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Juliet Tech"
-                  className="block w-full pl-12 pr-4 py-3.5 text-sm rounded-xl outline-none transition-all"
-                  style={{ backgroundColor: "#fbf9f4", border: "1px solid #e4bdbc", color: "#1b1c19" }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = "#b20024";
-                    e.currentTarget.style.boxShadow = "0 0 0 3px rgba(178,0,36,0.1)";
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = "#e4bdbc";
-                    e.currentTarget.style.boxShadow = "none";
-                  }}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-[#5b403f]">
                 Adresse e-mail
               </label>
               <div className="relative">
@@ -167,6 +141,11 @@ export default function SignupPage() {
                   }}
                 />
               </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider mb-2 text-[#5b403f]">Confirmer le mot de passe</label>
+              <input type="password" required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••••" className="block w-full px-4 py-3.5 text-sm rounded-xl outline-none" style={{ backgroundColor: "#fbf9f4", border: "1px solid #e4bdbc", color: "#1b1c19" }} />
             </div>
 
             <div>
@@ -211,6 +190,10 @@ export default function SignupPage() {
               ) : (
                 "S'inscrire"
               )}
+            </button>
+            <div className="relative flex items-center gap-3 py-2"><div className="flex-1 border-t" style={{ borderColor: "#e4bdbc" }} /><span className="text-xs text-[#5b403f]">Ou</span><div className="flex-1 border-t" style={{ borderColor: "#e4bdbc" }} /></div>
+            <button type="button" onClick={() => { window.location.href = "/api/auth/google"; }} className="w-full flex justify-center items-center gap-2 py-3 px-4 border rounded-xl bg-white text-sm font-bold text-[#1b1c19] hover:bg-gray-50 transition-colors" style={{ borderColor: "#e4bdbc" }}>
+              <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" /> Continuer avec Google
             </button>
           </form>
 
