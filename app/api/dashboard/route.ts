@@ -18,6 +18,8 @@ export async function GET() {
   const [totals, activity, campaigns, withdrawals] = await Promise.all([
     query(`SELECT
       COALESCE(SUM(amount) FILTER (WHERE status='completed'),0)::bigint AS collected,
+      COALESCE(SUM(amount) FILTER (WHERE status='completed' AND campaign_id IS NULL),0)::bigint AS direct_support,
+      COALESCE(SUM(amount) FILTER (WHERE status='completed' AND campaign_id IS NOT NULL),0)::bigint AS campaign_support,
       COALESCE(SUM(amount) FILTER (WHERE status='completed' AND created_at >= now()-interval '30 days'),0)::bigint AS last30,
       COALESCE(SUM(amount) FILTER (WHERE status='completed' AND created_at >= now()-interval '90 days'),0)::bigint AS last90,
       COUNT(*) FILTER (WHERE status='completed')::int AS supporters
