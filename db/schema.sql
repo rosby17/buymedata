@@ -26,6 +26,8 @@ CREATE TABLE IF NOT EXISTS campaigns (
   creator_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   description TEXT,
+  slug TEXT UNIQUE,
+  cover_url TEXT,
   target_amount BIGINT NOT NULL CHECK (target_amount > 0),
   collected_amount BIGINT NOT NULL DEFAULT 0 CHECK (collected_amount >= 0),
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'paused', 'completed', 'archived')),

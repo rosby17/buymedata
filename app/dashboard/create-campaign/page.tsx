@@ -1,10 +1,12 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function CreateCampaign() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const campaignId = searchParams.get("edit");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
@@ -13,6 +15,15 @@ export default function CreateCampaign() {
   const [isPublic, setIsPublic] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!campaignId) return;
+    fetch("/api/campaigns", { cache: "no-store" }).then(r => r.json()).then(data => {
+      const campaign = (data.campaigns || []).find((item: { id: string }) => item.id === campaignId);
+      if (!campaign) return;
+      setTitle(campaign.title || ""); setDescription(campaign.description || ""); setAmount(String(campaign.target_amount || "")); setImage(campaign.cover_url || null);
+    }).catch(() => setError("Impossible de charger cette cagnotte."));
+  }, [campaignId]);
 
   const calculateDaysRemaining = (dateStr: string) => {
     if (!dateStr) return "Sans limite";
@@ -41,15 +52,15 @@ export default function CreateCampaign() {
     setSaving(true);
     setError("");
     try {
-      const response = await fetch("/api/campaigns", {
-        method: "POST",
+      const response = await fetch(campaignId ? `/api/campaigns/${campaignId}` : "/api/campaigns", {
+        method: campaignId ? "PATCH" : "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ title, description, target_amount: amount }),
+        body: JSON.stringify({ title, description, target_amount: amount, cover_url: image }),
       });
       const payload = await response.json().catch(() => ({}));
       if (response.status === 401) { router.push("/login"); return; }
       if (!response.ok) throw new Error(payload.error || "Création impossible");
-      router.push("/dashboard");
+      router.push("/dashboard/campaigns");
       router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Création impossible");
@@ -76,7 +87,7 @@ export default function CreateCampaign() {
               </button>
             </Link>
             <h1 className="text-xl font-bold hidden md:block" style={{ color: "#1b1c19" }}>
-              Créer une cagnotte / objectif
+              {campaignId ? "Modifier la cagnotte" : "Créer une cagnotte / objectif"}
             </h1>
           </div>
           <div className="flex items-center">
@@ -97,7 +108,7 @@ export default function CreateCampaign() {
       <main className="max-w-7xl mx-auto px-4 md:px-8 py-8">
         <div className="md:hidden mb-6">
           <h1 className="text-3xl font-extrabold tracking-tight" style={{ color: "#1b1c19" }}>
-            Lancer votre projet
+            {campaignId ? "Modifier votre projet" : "Lancer votre projet"}
           </h1>
           <p className="text-sm mt-2" style={{ color: "#5b403f" }}>
             Définissez les détails de votre cagnotte pour financer vos besoins.
@@ -255,7 +266,7 @@ export default function CreateCampaign() {
                     className="text-white font-bold text-base px-8 py-3.5 rounded-xl transition-all hover:opacity-90 active:scale-95 shadow-md"
                     style={{ backgroundColor: "#b20024" }}
                   >
-                    {saving ? "Publication…" : "Publier la cagnotte"}
+                    {saving ? "Enregistrement…" : campaignId ? "Enregistrer" : "Publier la cagnotte"}
                   </button>
                 </div>
               </form>

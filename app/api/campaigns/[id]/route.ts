@@ -18,9 +18,10 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   const status = ["active", "paused", "archived"].includes(body.status) ? body.status : null;
   if (title !== null && title.length < 3) return Response.json({ error: "Titre trop court" }, { status: 400 });
   if (target !== null && (!Number.isFinite(target) || target < 1000)) return Response.json({ error: "Objectif minimum : 1 000 FCFA" }, { status: 400 });
+  const coverUrl = typeof body.cover_url === "string" && body.cover_url.length <= 2_500_000 ? body.cover_url : null;
   const result = await query(`UPDATE campaigns SET title=COALESCE($3,title), description=COALESCE($4,description),
-    target_amount=COALESCE($5,target_amount), status=COALESCE($6,status), updated_at=now()
-    WHERE id=$1 AND creator_id=$2 RETURNING id,title,description,target_amount,collected_amount,status,updated_at`, [id, userId, title, description, target === null ? null : Math.round(target), status]);
+    target_amount=COALESCE($5,target_amount), status=COALESCE($6,status), cover_url=COALESCE($7,cover_url), updated_at=now()
+    WHERE id=$1 AND creator_id=$2 RETURNING id,title,description,target_amount,collected_amount,status,slug,cover_url,updated_at`, [id, userId, title, description, target === null ? null : Math.round(target), status, coverUrl]);
   return Response.json({ campaign: result.rows[0] });
 }
 

@@ -46,8 +46,7 @@ export default function Navbar({ onSupportClick }: NavbarProps) {
       style={{ backgroundColor: "#fbf9f4", borderColor: "#e4bdbc" }}
     >
       <div
-        className="flex justify-between items-center w-full h-full mx-auto px-8"
-        style={{ maxWidth: "1200px" }}
+        className="flex justify-between items-center w-full h-full px-5 sm:px-8"
       >
         {/* Logo + Nav Links */}
         <div className="flex items-center gap-8">
@@ -65,8 +64,8 @@ export default function Navbar({ onSupportClick }: NavbarProps) {
 
         {/* Right side */}
         <div className="flex items-center gap-4">
-          {/* Search bar — shown on explore & dashboard */}
-          {(pathname === "/explore" || pathname === "/dashboard") && (
+          {/* Search is only useful on the creator directory, never in the dashboard. */}
+          {pathname === "/explore" && (
             <div className="relative hidden lg:block">
               <span
                 className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2"
