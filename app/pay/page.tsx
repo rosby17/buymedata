@@ -1,5 +1,5 @@
 "use client";
-import { useState, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -30,6 +30,7 @@ function PaymentFlowInner() {
   const initialAmount = parseInt(searchParams.get("amount") || "0") || 0;
   const initialMessage = decodeURIComponent(searchParams.get("message") || "");
   const creatorId = searchParams.get("creator_id") || "";
+  const [creator, setCreator] = useState<{name:string;avatar_url?:string;category?:string}|null>(null);
 
   const [step, setStep] = useState(1);
   const [currentAmount, setCurrentAmount] = useState(initialAmount);
@@ -46,6 +47,11 @@ function PaymentFlowInner() {
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [showOverlay, setShowOverlay] = useState(false);
   const [overlayState, setOverlayState] = useState<"loading" | "success">("loading");
+
+  useEffect(() => {
+    if (!creatorId) return;
+    fetch(`/api/creators/${creatorId}`).then((r) => r.ok ? r.json() : Promise.reject()).then((data) => setCreator(data.creator)).catch(() => setPaymentError("Ce créateur n’existe pas."));
+  }, [creatorId]);
 
   const gaugePercent = Math.min((currentAmount / 20000) * 100, 100);
 
@@ -113,11 +119,11 @@ function PaymentFlowInner() {
                 >
                   <img
                     className="w-full h-full object-cover"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5PXsU07Swjq7Y3mH7tozVZbYHzec6Aw5C2DmaWUfzS98LY35OIcUQS5rc_n8VemuuTVVwfeX1hyqQhBHtwMWEGAr8c_ZB_7XEAkeDZtq9vVb3meq7ZGhD4g0f1F0K0CTH9MlJJLYtDhRsdoXujXgsRZGIli6rVpuje-1XvBP7a1FLMWkxThc9EyWhV2BC8eJWC8_TxNofwvJDlxquJc3R0WjNuA9G7VGUmFYCq-1Vi-ylMlrLGzts10fqUh4bnnoD5L5qNqMs0x8W"
-                    alt="Juliet"
+                    src={creator?.avatar_url || "/buy-me-data-mascot.png"}
+                    alt={creator?.name || "Créateur"}
                   />
                 </div>
-                <h2 className="text-2xl font-semibold" style={{ color: "#1b1c19" }}>Juliet</h2>
+                <h2 className="text-2xl font-semibold" style={{ color: "#1b1c19" }}>{creator?.name || "Créateur"}</h2>
                 <p className="text-sm mt-1" style={{ color: "#5b403f" }}>
                   Créatrice digitale &amp; Formatrice Tech
                 </p>
@@ -177,7 +183,7 @@ function PaymentFlowInner() {
                 <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>
                   arrow_back
                 </span>
-                Retour au profil de Juliet
+                Retour aux créateurs
               </button>
               <p className="text-xs" style={{ color: "#5b403f" }}>
                 <span
@@ -313,7 +319,7 @@ function PaymentFlowInner() {
                   </span>
                 </h3>
                 <p className="text-sm mb-4" style={{ color: "#5b403f" }}>
-                  Votre message sera visible par Juliet et la communauté.
+                  Votre message sera visible par le créateur.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                   <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} required placeholder="Votre nom" className="w-full p-3 rounded-lg border outline-none text-sm" style={{ borderColor: "#e4bdbc", backgroundColor: "#fbf9f4" }} />
@@ -327,7 +333,7 @@ function PaymentFlowInner() {
                     minHeight: "160px",
                     flex: 1,
                   }}
-                  placeholder="Dites quelque chose de gentil à Juliet..."
+                  placeholder="Laissez un message au créateur..."
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   onFocus={(e) => {
@@ -498,7 +504,7 @@ function PaymentFlowInner() {
                   Paiement réussi !
                 </h3>
                 <p className="text-sm mb-6" style={{ color: "#5b403f" }}>
-                  Juliet a bien reçu{" "}
+                  Le créateur a bien reçu{" "}
                   <strong>{currentAmount.toLocaleString("fr-FR")} FCFA</strong>. Merci !
                 </p>
                 <button

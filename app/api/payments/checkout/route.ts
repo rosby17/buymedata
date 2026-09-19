@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       email: String(body.email),
       customer_name: String(body.customer_name),
       customer_phone: body.customer_phone ? String(body.customer_phone) : undefined,
-      redirect_url: `${origin}/merci`,
+      redirect_url: `${origin}/merci?order_id=${orderId}&amount=${encodeURIComponent(String(body.amount))}`,
       meta: { order_id: orderId, amount: String(body.amount) },
     });
     await queryPayment(orderId, result);

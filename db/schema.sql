@@ -7,6 +7,10 @@ CREATE TABLE IF NOT EXISTS profiles (
   role TEXT NOT NULL DEFAULT 'creator' CHECK (role IN ('creator', 'supporter', 'admin')),
   phone TEXT,
   avatar_url TEXT,
+  username TEXT UNIQUE,
+  bio TEXT,
+  category TEXT,
+  onboarding_completed BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -96,3 +100,8 @@ CREATE TABLE IF NOT EXISTS withdrawals (
 CREATE INDEX IF NOT EXISTS orders_creator_idx ON orders(creator_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS payments_status_idx ON payments(status);
 CREATE INDEX IF NOT EXISTS webhook_events_type_idx ON webhook_events(event_type);
+
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS username TEXT UNIQUE;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS bio TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS category TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN NOT NULL DEFAULT false;

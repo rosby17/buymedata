@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
@@ -66,11 +66,7 @@ function ConfirmationInner() {
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
 
-  const txRef = useRef(
-    "CC-" +
-    Date.now().toString(36).toUpperCase().slice(-5) +
-    Math.random().toString(36).slice(2, 5).toUpperCase()
-  );
+  const orderId = searchParams.get("order_id") || "";
 
   const now = new Date().toLocaleString("fr-FR", {
     day: "2-digit",
@@ -80,8 +76,8 @@ function ConfirmationInner() {
     minute: "2-digit",
   });
 
-  const shareText = `Je viens d'offrir ⚡ ${amount / 500} Go de connexion (${amount.toLocaleString("fr-FR")} FCFA) à Juliet sur Buy Me Data ! 🎉 Rejoignez le mouvement.`;
-  const shareUrl = typeof window !== "undefined" ? window.location.origin : "https://topupmydata.app";
+  const shareText = `Je viens de soutenir un créateur avec ${amount.toLocaleString("fr-FR")} FCFA sur Buy Me Data.`;
+  const shareUrl = typeof window !== "undefined" ? window.location.origin : "https://buymedata.tools-cl.com";
 
   const shareActions = [
     {
@@ -117,7 +113,7 @@ function ConfirmationInner() {
   ];
 
   const receiptRows = [
-    { label: "Référence", value: txRef.current },
+    { label: "Référence", value: orderId || "En cours de confirmation" },
     { label: "Date", value: now },
     { label: "Méthode", value: methodLabel },
     {
@@ -125,7 +121,7 @@ function ConfirmationInner() {
       value: `${Math.round(amount * 0.10).toLocaleString("fr-FR")} FCFA (10%)`,
     },
     {
-      label: "Juliet reçoit",
+      label: "Le créateur reçoit",
       value: `${Math.round(amount * 0.90).toLocaleString("fr-FR")} FCFA`,
       highlight: true,
     },
@@ -184,7 +180,7 @@ function ConfirmationInner() {
             Merci pour votre soutien ! 🎉
           </h1>
           <p className="text-base mb-8" style={{ color: "#5b403f" }}>
-            Votre contribution aide Juliet à continuer de créer du contenu de
+            Votre contribution aide le créateur à continuer de créer du contenu de
             qualité pour la communauté.
           </p>
 
@@ -203,15 +199,15 @@ function ConfirmationInner() {
                 style={{ borderColor: "#b20024" }}
               >
                 <img
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5PXsU07Swjq7Y3mH7tozVZbYHzec6Aw5C2DmaWUfzS98LY35OIcUQS5rc_n8VemuuTVVwfeX1hyqQhBHtwMWEGAr8c_ZB_7XEAkeDZtq9vVb3meq7ZGhD4g0f1F0K0CTH9MlJJLYtDhRsdoXujXgsRZGIli6rVpuje-1XvBP7a1FLMWkxThc9EyWhV2BC8eJWC8_TxNofwvJDlxquJc3R0WjNuA9G7VGUmFYCq-1Vi-ylMlrLGzts10fqUh4bnnoD5L5qNqMs0x8W"
-                  alt="Juliet"
+                  src="/buy-me-data-mascot.png"
+                  alt="Créateur"
                   className="w-full h-full object-cover"
                 />
               </div>
               <div>
                 <div className="flex items-center gap-1">
                   <span className="font-semibold text-lg" style={{ color: "#1b1c19" }}>
-                    Juliet
+                    Créateur
                   </span>
                   <span
                     className="material-symbols-outlined text-base"
