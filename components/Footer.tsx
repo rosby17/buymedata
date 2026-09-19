@@ -24,7 +24,7 @@ export default function Footer() {
             </span>
           </Link>
           <p className="mt-4 text-xs leading-relaxed" style={{ color: "#5b403f" }}>
-            Propulser la créativité africaine en finançant la connexion internet des créateurs (Base : 500 FCFA = 1 Go de data).
+            Propulser la créativité en finançant la connexion internet des créateurs (Base : 500 FCFA = 1 Go de data).
           </p>
         </div>
 
@@ -113,7 +113,7 @@ export default function Footer() {
         style={{ maxWidth: "1200px", borderColor: "rgba(228, 189, 188, 0.3)" }}
       >
         <p className="text-xs" style={{ color: "#5b403f" }}>
-          © 2024 Buy Me Data. Tous droits réservés. Fait avec ❤️ pour propulser les créateurs africains.
+          © 2024 Buy Me Data. Tous droits réservés. Fait avec ❤️ pour propulser les créateurs.
         </p>
       </div>
     </footer>

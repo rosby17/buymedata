@@ -67,7 +67,7 @@ export default function SignupPage() {
             Créer. Soutenir.<br />S&apos;élever ensemble.
           </h2>
           <p className="text-lg opacity-90 max-w-md">
-            Rejoignez la communauté Buy Me Data. Financez la créativité et propulsez les créateurs africains.
+            Rejoignez la communauté Buy Me Data. Financez la créativité et propulsez les créateurs.
           </p>
         </div>
       </div>
