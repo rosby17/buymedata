@@ -9,7 +9,7 @@ export default function Footer() {
       style={{ backgroundColor: "#f5f3ee", borderColor: "#e4bdbc" }}
     >
       <div
-        className="w-full py-8 px-8 mx-auto grid grid-cols-1 md:grid-cols-4 gap-5"
+        className="w-full py-8 px-8 mx-auto grid grid-cols-1 md:grid-cols-3 gap-5"
         style={{ maxWidth: "1200px" }}
       >
         {/* Brand */}
@@ -26,32 +26,6 @@ export default function Footer() {
           <p className="mt-4 text-xs leading-relaxed" style={{ color: "#5b403f" }}>
             Propulser la créativité en finançant la connexion internet des créateurs (Base : 500 FCFA = 1 Go de data).
           </p>
-        </div>
-
-        {/* Plateforme */}
-        <div>
-          <h4 className="font-semibold mb-4 text-sm" style={{ color: "#1b1c19" }}>
-            Plateforme
-          </h4>
-          <ul className="space-y-2">
-            {[
-              { label: "Explorer les créateurs", href: "/explore" },
-              { label: "Comment ça marche ? (500F = 1 Go)", href: "/explore" },
-              { label: "Tarifs & Transparence (90% reversés)", href: "/" },
-              { label: "Sécurité & Mobile Money", href: "/pay" },
-            ].map((link) => (
-              <li key={link.label}>
-                <Link href={link.href}>
-                  <span
-                    className="text-xs transition-opacity hover:opacity-70 cursor-pointer"
-                    style={{ color: "#5b403f" }}
-                  >
-                    {link.label}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
         </div>
 
         {/* Créateurs */}
