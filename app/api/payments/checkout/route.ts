@@ -14,10 +14,12 @@ export async function POST(request: NextRequest) {
     const paymentMethod = body.payment_method === "card" || body.payment_method === "paypal" ? body.payment_method : "mobile_money";
     const origin = request.nextUrl.origin;
     if (paymentMethod === "mobile_money" && !productCode) return Response.json({ error: "Le paiement Mobile Money n'est pas configuré" }, { status: 503 });
-    if (!body?.email || !body?.customer_name || !body?.amount) {
-      return Response.json({ error: "email, customer_name and amount are required" }, { status: 400 });
-    }
+    if (!body?.amount) return Response.json({ error: "amount is required" }, { status: 400 });
     const orderId = crypto.randomUUID();
+    // Identity is optional for a donor. Payment providers still need stable values,
+    // so anonymous donations receive internal placeholders that are never shown publicly.
+    const customerName = String(body.customer_name || "").trim() || "Donateur anonyme";
+    const customerEmail = String(body.email || "").trim().toLowerCase() || `anonymous+${orderId}@buymedata.invalid`;
     const creatorId = String(body.creator_id || "");
     const campaignId = body.campaign_id ? String(body.campaign_id) : null;
     const amount = Math.round(Number(body.amount));
@@ -31,16 +33,16 @@ export async function POST(request: NextRequest) {
     }
     const supporterId = await currentUserId();
     await withTransaction(async (client) => {
-      await client.query(`INSERT INTO orders (id, creator_id, campaign_id, supporter_id, email, customer_name, customer_phone, amount, message, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending')`, [orderId, creatorId, campaignId, supporterId, String(body.email).trim().toLowerCase(), String(body.customer_name).trim(), body.customer_phone ? String(body.customer_phone) : null, amount, body.message ? String(body.message).trim().slice(0, 500) : null]);
+      await client.query(`INSERT INTO orders (id, creator_id, campaign_id, supporter_id, email, customer_name, customer_phone, amount, message, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending')`, [orderId, creatorId, campaignId, supporterId, customerEmail, customerName, body.customer_phone ? String(body.customer_phone) : null, amount, body.message ? String(body.message).trim().slice(0, 500) : null]);
     });
     const result = paymentMethod === "mobile_money" ? await createCheckout({
       product_code: productCode || "",
-      email: String(body.email),
-      customer_name: String(body.customer_name),
+      email: customerEmail,
+      customer_name: customerName,
       customer_phone: body.customer_phone ? String(body.customer_phone) : undefined,
       redirect_url: `${origin}/merci?order_id=${orderId}`,
       meta: { order_id: orderId, creator_id: creatorId, amount: String(amount) },
-    }) : await createTaraCheckout({ orderId, amount, origin, customerName: String(body.customer_name), provider: paymentMethod });
+    }) : await createTaraCheckout({ orderId, amount, origin, customerName, provider: paymentMethod });
     await queryPayment(orderId, result, paymentMethod === "mobile_money" ? "warappay" : "taramoney");
     return Response.json({ ...result, order_id: orderId });
   } catch (error) {

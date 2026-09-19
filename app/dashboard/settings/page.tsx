@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Navbar from "@/components/Navbar";
+// The dashboard layout owns the persistent application header.
+const Navbar = () => null;
 
 const input = "mt-2 w-full rounded-xl border border-[#ead6d2] bg-white px-4 py-3 text-sm outline-none focus:border-[#b20024] focus:ring-4 focus:ring-[#b20024]/10";
 type Profile = { full_name?: string; username?: string; category?: string; avatar_url?: string; bio?: string };

@@ -58,7 +58,7 @@ function PaymentFlowInner() {
   };
 
   const handlePay = async () => {
-    if (!customerName.trim() || !email.trim()) { setPaymentError("Veuillez renseigner votre nom et votre adresse e-mail."); return; }
+    if (currentAmount <= 0) { setPaymentError("Choisissez un montant avant de poursuivre."); return; }
     setShowOverlay(true);
     setPaymentError("");
     try {
@@ -306,8 +306,8 @@ function PaymentFlowInner() {
                   Votre message sera visible par le créateur.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                  <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} required placeholder="Votre nom" className="w-full p-3 rounded-lg border outline-none text-sm" style={{ borderColor: "#e4bdbc", backgroundColor: "#fbf9f4" }} />
-                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="Votre e-mail" className="w-full p-3 rounded-lg border outline-none text-sm" style={{ borderColor: "#e4bdbc", backgroundColor: "#fbf9f4" }} />
+                  <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Votre nom (optionnel)" className="w-full p-3 rounded-lg border outline-none text-sm" style={{ borderColor: "#e4bdbc", backgroundColor: "#fbf9f4" }} />
+                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Votre e-mail (optionnel)" className="w-full p-3 rounded-lg border outline-none text-sm" style={{ borderColor: "#e4bdbc", backgroundColor: "#fbf9f4" }} />
                 </div>
                 <textarea
                   className="w-full p-4 rounded-lg border outline-none resize-none text-sm mb-5 transition-all"

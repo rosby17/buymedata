@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function CreateCampaign() {
+function CreateCampaignContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const campaignId = searchParams.get("edit");
@@ -73,7 +73,7 @@ export default function CreateCampaign() {
     <div className="min-h-screen text-[#1b1c19]" style={{ backgroundColor: "#fbf9f4" }}>
       {/* ── Top Navigation ── */}
       <nav
-        className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b px-4 py-4 md:px-8"
+        className="hidden"
         style={{ borderColor: "#e4bdbc" }}
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -373,4 +373,8 @@ export default function CreateCampaign() {
       </div>
     </div>
   );
+}
+
+export default function CreateCampaign() {
+  return <Suspense fallback={<main className="min-h-[calc(100vh-4rem)] px-5 py-20 text-center text-[#6f5a57]">Chargement de la cagnotte…</main>}><CreateCampaignContent /></Suspense>;
 }
