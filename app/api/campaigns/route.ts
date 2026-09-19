@@ -1,6 +1,13 @@
 import { currentUserId } from "@/lib/auth";
 import { query } from "@/lib/db";
 
+export async function GET() {
+  const userId = await currentUserId();
+  if (!userId) return Response.json({ error: "Authentication required" }, { status: 401 });
+  const result = await query("SELECT id, title, description, target_amount, collected_amount, status, created_at, updated_at FROM campaigns WHERE creator_id=$1 ORDER BY created_at DESC", [userId]);
+  return Response.json({ campaigns: result.rows });
+}
+
 export async function POST(request: Request) {
   const userId = await currentUserId();
   if (!userId) return Response.json({ error: "Authentication required" }, { status: 401 });

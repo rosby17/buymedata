@@ -9,7 +9,7 @@ export default function Footer() {
       style={{ backgroundColor: "#f5f3ee", borderColor: "#e4bdbc" }}
     >
       <div
-        className="w-full py-8 px-8 mx-auto grid grid-cols-1 md:grid-cols-3 gap-5"
+        className="w-full py-8 px-8 mx-auto grid grid-cols-1 md:grid-cols-2 gap-5"
         style={{ maxWidth: "1200px" }}
       >
         {/* Brand */}
@@ -37,8 +37,6 @@ export default function Footer() {
             {[
               { label: "Créer une page de don", href: "/signup" },
               { label: "Tableau de bord", href: "/dashboard" },
-              { label: "Convertisseur FCFA vers Gigas", href: "/dashboard" },
-              { label: "Guide de collecte internet", href: "/explore" },
             ].map((link) => (
               <li key={link.label}>
                 <Link href={link.href}>
@@ -54,31 +52,6 @@ export default function Footer() {
           </ul>
         </div>
 
-        {/* Communauté */}
-        <div>
-          <h4 className="font-semibold mb-4 text-sm" style={{ color: "#1b1c19" }}>
-            Communauté
-          </h4>
-          <ul className="space-y-2">
-            {[
-              { label: "Sign In / Connexion", href: "/login" },
-              { label: "Sign Up / Inscription", href: "/signup" },
-              { label: "Twitter / X", href: "#" },
-              { label: "Discord Afrique Créative", href: "#" },
-            ].map((link) => (
-              <li key={link.label}>
-                <Link href={link.href}>
-                  <span
-                    className="text-xs transition-opacity hover:opacity-70 cursor-pointer"
-                    style={{ color: "#5b403f" }}
-                  >
-                    {link.label}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
       </div>
 
       {/* Copyright */}
