@@ -27,8 +27,7 @@ export default function Navbar({ onSupportClick }: NavbarProps) {
   const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
-    const logged = sessionStorage.getItem("isLoggedIn") === "true" || pathname.startsWith("/dashboard") || pathname.startsWith("/admin");
-    setIsLoggedIn(logged);
+    fetch("/api/auth/session").then((response) => setIsLoggedIn(response.ok)).catch(() => setIsLoggedIn(false));
   }, [pathname]);
 
   const handleLogout = () => {
@@ -60,7 +59,7 @@ export default function Navbar({ onSupportClick }: NavbarProps) {
               className="text-2xl font-extrabold tracking-tight cursor-pointer"
               style={{ color: "#b20024" }}
             >
-              Buy Me Data
+              <span className="text-[1.05rem] sm:text-[1.2rem] font-bold tracking-tight">Buy Me Data</span>
             </span>
           </Link>
 

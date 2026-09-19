@@ -1,7 +1,15 @@
 import { cookies } from "next/headers";
 import crypto from "node:crypto";
-import { createSession, hashPassword, sessionCookie, verifyPassword } from "@/lib/auth";
+import { createSession, currentUserId, hashPassword, sessionCookie, verifyPassword } from "@/lib/auth";
 import { query } from "@/lib/db";
+
+export async function GET() {
+  const userId = await currentUserId();
+  if (!userId) return Response.json({ user: null }, { status: 401 });
+  const result = await query<{ id: string; email: string; name: string; role: string }>("SELECT id, email, full_name AS name, role FROM profiles WHERE id = $1", [userId]);
+  const user = result.rows[0];
+  return user ? Response.json({ user }) : Response.json({ user: null }, { status: 401 });
+}
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
