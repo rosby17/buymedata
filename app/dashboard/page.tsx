@@ -102,10 +102,13 @@ function WithdrawModal({
   onClose: () => void;
 }) {
   const [amount, setAmount] = useState("");
+  const [destination, setDestination] = useState("");
   const [sent, setSent] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const response = await fetch("/api/dashboard", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ amount, destination, method: method === "mobile" ? "mobile_money" : "bank" }) });
+    if (!response.ok) return;
     setSent(true);
     setTimeout(() => { onClose(); setSent(false); }, 2000);
   };
@@ -160,6 +163,8 @@ function WithdrawModal({
                   className="w-full outline-none px-4 py-3 rounded-lg text-sm"
                   style={{ border: "1px solid #e4bdbc", backgroundColor: "#ffffff" }}
                   placeholder="Numéro Mobile Money (ex: 6XX XXX XXX)"
+                  value={destination}
+                  onChange={(e) => setDestination(e.target.value)}
                 />
               ) : (
                 <>
@@ -169,6 +174,8 @@ function WithdrawModal({
                     className="w-full outline-none px-4 py-3 rounded-lg text-sm"
                     style={{ border: "1px solid #e4bdbc", backgroundColor: "#ffffff" }}
                     placeholder="IBAN ou numéro de compte"
+                    value={destination}
+                    onChange={(e) => setDestination(e.target.value)}
                   />
                   <input
                     type="text"
@@ -298,9 +305,21 @@ export default function DashboardPage() {
   const [withdrawModal, setWithdrawModal] = useState<"mobile" | "bank" | null>(null);
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [showAllActivity, setShowAllActivity] = useState(false);
+  const [dbActivity, setDbActivity] = useState<typeof RECENT_ACTIVITY>([]);
+  const [dbGoals, setDbGoals] = useState<typeof GOALS>([]);
+  const [available, setAvailable] = useState(0);
+
+  useEffect(() => {
+    fetch("/api/dashboard").then((r) => r.ok ? r.json() : Promise.reject()).then((payload) => {
+      setDbActivity(payload.activity || []);
+      setDbGoals((payload.campaigns || []).map((c: any) => ({ id: c.id, title: c.title, current: Number(c.current), total: Number(c.total), pct: c.total ? Math.round(Number(c.current) * 100 / Number(c.total)) : 0, active: c.status === "active" })));
+      setAvailable(Number(payload.stats?.collected || 0));
+    }).catch(() => undefined);
+  }, []);
 
   const AVAILABLE = 845000;
-  const visibleActivity = showAllActivity ? RECENT_ACTIVITY : RECENT_ACTIVITY.slice(0, 3);
+  const activity = dbActivity;
+  const visibleActivity = showAllActivity ? activity : activity.slice(0, 3);
 
   const addGoal = (g: typeof GOALS[0]) => {
     setGoals((prev) => [g, ...prev]);
@@ -379,8 +398,8 @@ export default function DashboardPage() {
                   payments
                 </span>
               </div>
-              <div className="text-3xl font-bold" style={{ color: "#1b1c19" }}>
-                2.450.000 FCFA
+          <div className="text-3xl font-bold" style={{ color: "#1b1c19" }}>
+                {available.toLocaleString("fr-FR")} FCFA
               </div>
             </div>
             <div className="mt-4">
@@ -759,7 +778,7 @@ export default function DashboardPage() {
       {withdrawModal && (
         <WithdrawModal
           method={withdrawModal}
-          available={AVAILABLE}
+          available={available}
           onClose={() => setWithdrawModal(null)}
         />
       )}
