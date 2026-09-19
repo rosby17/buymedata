@@ -7,6 +7,9 @@ import { TopUpLogo } from "@/components/Navbar";
 export default function SignupPage() {
   const router = useRouter();
   const [role, setRole] = useState<"creator" | "supporter">("creator");
+  const [step, setStep] = useState<1 | 2>(1);
+  const [username, setUsername] = useState("");
+  const [usernameState, setUsernameState] = useState<"idle" | "checking" | "available" | "taken">("idle");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -15,6 +18,19 @@ export default function SignupPage() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (step === 1) {
+      const normalized = username.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
+      if (normalized.length < 3 || normalized.length > 30) { setError("Votre username doit contenir 3 à 30 caractères"); return; }
+      setLoading(true); setError(""); setUsernameState("checking");
+      try {
+        const response = await fetch(`/api/usernames?username=${encodeURIComponent(normalized)}`, { cache: "no-store" });
+        const result = await response.json();
+        if (!result.available) { setUsernameState("taken"); setError("Ce username est déjà pris. Choisissez-en un autre."); return; }
+        setUsername(normalized); setUsernameState("available"); setStep(2);
+      } catch { setError("Impossible de vérifier ce username"); }
+      finally { setLoading(false); }
+      return;
+    }
     if (!email || !password || !confirmPassword) {
       setError("Veuillez remplir tous les champs");
       return;
@@ -24,7 +40,7 @@ export default function SignupPage() {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch("/api/auth/session", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email, password, role, register: true }) });
+      const response = await fetch("/api/auth/session", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email, password, role, username, register: true }) });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "Inscription impossible");
       sessionStorage.setItem("isLoggedIn", "true");
@@ -76,6 +92,17 @@ export default function SignupPage() {
             Rejoignez-nous en tant que créateur ou soutien.
           </p>
 
+          <form onSubmit={handleSignup} className="space-y-4">
+          {error && step === 1 && <div className="p-3 rounded-xl text-xs font-bold text-center" style={{ backgroundColor: "#ffdad8", color: "#b20024" }}>{error}</div>}
+          {step === 1 ? <>
+          <div className="rounded-2xl border border-[#e4bdbc] bg-[#fbf9f4] p-5">
+            <p className="text-xs font-bold uppercase tracking-wider text-[#5b403f]">Votre lien public</p>
+            <label className="mt-3 block text-sm font-bold text-[#1b1c19]">Choisissez votre username</label>
+            <div className="mt-2 flex items-center rounded-xl border border-[#e4bdbc] bg-white px-4 py-3.5 text-sm"><span className="whitespace-nowrap text-[#7b6864]">buymedata.tools-cl.com/</span><input autoFocus required value={username} onChange={(e)=>{setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g,""));setUsernameState("idle");setError("");}} placeholder="votre-nom" className="min-w-0 flex-1 outline-none" /></div>
+            <p className="mt-2 text-xs text-[#7b6864]">Ce lien sera votre page de soutien et pourra être partagé partout.</p>
+            {usernameState === "available" && <p className="mt-2 text-xs font-semibold text-[#315c38]">✓ Username disponible</p>}
+          </div>
+          </> : <>
           {/* Role Selection Toggle */}
           <div className="flex flex-col sm:flex-row gap-3 mb-6 bg-gray-50 p-2 rounded-xl border" style={{ borderColor: "#e4bdbc" }}>
             <button
@@ -104,8 +131,6 @@ export default function SignupPage() {
             </button>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSignup} className="space-y-4">
             {error && (
               <div
                 className="p-3 rounded-xl text-xs font-bold text-center"
@@ -195,6 +220,8 @@ export default function SignupPage() {
             <button type="button" onClick={() => { window.location.href = "/api/auth/google"; }} className="w-full flex justify-center items-center gap-2 py-3 px-4 border rounded-xl bg-white text-sm font-bold text-[#1b1c19] hover:bg-gray-50 transition-colors" style={{ borderColor: "#e4bdbc" }}>
               <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" /> Continuer avec Google
             </button>
+          </>}
+          {step === 1 && <button type="submit" disabled={loading} className="w-full mt-6 flex justify-center py-4 px-4 rounded-xl text-base font-bold text-white shadow-md transition-all disabled:opacity-50" style={{ backgroundColor: "#b20024" }}>{loading ? "Vérification…" : "Continuer"}</button>}
           </form>
 
           <p className="mt-8 text-center text-sm text-[#5b403f]">

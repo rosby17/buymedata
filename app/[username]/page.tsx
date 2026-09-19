@@ -1,0 +1,17 @@
+import Link from "next/link";
+import { query } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
+
+export default async function PublicCreatorPage({ params }: { params: Promise<{ username: string }> }) {
+  const { username } = await params;
+  const result = await query(`SELECT p.id, p.full_name AS name, p.username, p.avatar_url, p.bio, p.category,
+    COALESCE(json_agg(json_build_object('id', c.id, 'title', c.title, 'description', c.description,
+      'target_amount', c.target_amount, 'collected_amount', c.collected_amount)) FILTER (WHERE c.id IS NOT NULL), '[]') AS campaigns
+    FROM profiles p LEFT JOIN campaigns c ON c.creator_id=p.id AND c.status='active'
+    WHERE p.username=$1 AND p.role='creator' AND p.onboarding_completed=true GROUP BY p.id`, [username.toLowerCase()]);
+  const creator = result.rows[0];
+  if (!creator) return <main className="grid min-h-screen place-items-center bg-[#fbf9f4] px-5 text-center"><div><h1 className="text-3xl font-bold">Page introuvable</h1><p className="mt-2 text-sm text-[#6f5a57]">Ce lien de soutien n’est pas encore disponible.</p><Link href="/explore" className="mt-6 inline-block rounded-xl bg-[#b20024] px-5 py-3 text-sm font-bold text-white">Explorer les créateurs</Link></div></main>;
+  const campaign = creator.campaigns?.[0];
+  return <main className="min-h-screen bg-[#fbf9f4] px-4 py-10 sm:py-16"><div className="mx-auto max-w-xl"><Link href="/explore" className="text-sm font-bold text-[#b20024]">Buy Me Data</Link><section className="mt-8 rounded-3xl border border-[#ead6d2] bg-white p-6 text-center shadow-sm sm:p-10"><img src={creator.avatar_url||"/buy-me-data-mascot.png"} alt={creator.name} className="mx-auto h-24 w-24 rounded-3xl bg-[#fff2f1] object-cover"/><h1 className="mt-5 text-3xl font-bold">{creator.name}</h1><p className="mt-1 text-sm text-[#6f5a57]">{creator.category||"Créateur de contenu"}</p>{creator.bio&&<p className="mx-auto mt-5 max-w-md text-sm leading-6 text-[#5b403f]">{creator.bio}</p>}{campaign?<div className="mt-8 rounded-2xl bg-[#fbf9f4] p-5 text-left"><p className="font-bold">{campaign.title}</p><p className="mt-2 text-sm text-[#6f5a57]">{campaign.description}</p><div className="mt-4 h-2 overflow-hidden rounded-full bg-[#eadfdb]"><div className="h-full bg-[#b20024]" style={{width:`${Math.min(100,Math.round(Number(campaign.collected_amount)*100/Number(campaign.target_amount)))}%`}}/></div><p className="mt-2 text-xs text-[#6f5a57]">{Number(campaign.collected_amount).toLocaleString("fr-FR")} / {Number(campaign.target_amount).toLocaleString("fr-FR")} FCFA</p></div>:<p className="mt-8 rounded-2xl bg-[#fbf9f4] p-4 text-sm text-[#6f5a57]">Soutenez directement ce créateur.</p>}<Link href={`/pay?creator_id=${creator.id}${campaign?`&campaign_id=${campaign.id}`:""}`} className="mt-6 block rounded-xl bg-[#b20024] px-5 py-4 text-center font-bold text-white">Soutenir {creator.name}</Link></section></div></main>;
+}
