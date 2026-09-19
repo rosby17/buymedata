@@ -1,4 +1,5 @@
 import { verifyWarapPaySignature } from "@/lib/webhook";
+import { withTransaction } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -12,7 +13,12 @@ export async function POST(request: Request) {
   if (!event.data?.id || !["checkout.completed", "checkout.failed"].includes(event.event || "")) {
     return Response.json({ received: true });
   }
-  // TODO: persist the event id and update the order in the database.
-  // Processing must be idempotent on event.data.id before enabling fulfilment.
+  await withTransaction(async (client) => {
+    const inserted = await client.query(`INSERT INTO webhook_events (provider, event_id, event_type, payload, processed_at) VALUES ('warappay', $1, $2, $3, now()) ON CONFLICT (event_id) DO NOTHING RETURNING id`, [event.data!.id, event.event, event]);
+    if (!inserted.rowCount) return;
+    const orderId = (event.data as { meta?: { order_id?: string } }).meta?.order_id;
+    if (orderId) await client.query(`UPDATE payments SET status = $2, raw_status = $2, updated_at = now() WHERE order_id = $1`, [orderId, event.data!.status || (event.event === "checkout.completed" ? "completed" : "failed")]);
+    if (orderId) await client.query(`UPDATE orders SET status = $2, updated_at = now() WHERE id = $1`, [orderId, event.data!.status || (event.event === "checkout.completed" ? "completed" : "failed")]);
+  });
   return Response.json({ received: true });
 }
