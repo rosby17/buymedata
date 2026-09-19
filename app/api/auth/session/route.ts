@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     if (role === "creator" && (username.length < 3 || username.length > 30)) return Response.json({ error: "Choisissez un username de 3 à 30 caractères" }, { status: 400 });
     const id = crypto.randomUUID();
     try {
-      await query("INSERT INTO profiles (id, email, full_name, username, role) VALUES ($1, $2, $3, $4, $5)", [id, email, name || email.split("@")[0], role === "creator" ? username : null, role]);
+      await query("INSERT INTO profiles (id, email, full_name, username, role) VALUES ($1, $2, $3, $4, $5)", [id, email, name || email.split("@")[0], username, role]);
       await query("INSERT INTO auth_credentials (user_id, password_hash) VALUES ($1, $2)", [id, hashPassword(password)]);
     } catch (error: unknown) {
       if (String(error).includes("duplicate key")) return Response.json({ error: "An account already exists" }, { status: 409 });
