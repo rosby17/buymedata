@@ -16,7 +16,12 @@ export async function GET() {
     return Response.json({ mode: "supporter", supports: supports.rows, stats: { collected: completed.reduce((sum, row) => sum + Number(row.amount), 0), supporters: completed.length } });
   }
   const [totals, activity, campaigns, withdrawals] = await Promise.all([
-    query("SELECT COALESCE(SUM(amount) FILTER (WHERE status = 'completed'), 0)::bigint AS collected, COUNT(*) FILTER (WHERE status = 'completed')::int AS supporters FROM orders WHERE creator_id = $1", [userId]),
+    query(`SELECT
+      COALESCE(SUM(amount) FILTER (WHERE status='completed'),0)::bigint AS collected,
+      COALESCE(SUM(amount) FILTER (WHERE status='completed' AND created_at >= now()-interval '30 days'),0)::bigint AS last30,
+      COALESCE(SUM(amount) FILTER (WHERE status='completed' AND created_at >= now()-interval '90 days'),0)::bigint AS last90,
+      COUNT(*) FILTER (WHERE status='completed')::int AS supporters
+      FROM orders WHERE creator_id=$1`, [userId]),
     query("SELECT id, customer_name AS name, message, amount, created_at FROM orders WHERE creator_id = $1 ORDER BY created_at DESC LIMIT 20", [userId]),
     query("SELECT id, title, target_amount AS total, collected_amount AS current, status FROM campaigns WHERE creator_id = $1 ORDER BY created_at DESC", [userId]),
     query("SELECT id, amount, fee_amount, net_amount, method, destination, status, created_at FROM withdrawals WHERE creator_id = $1 ORDER BY created_at DESC LIMIT 10", [userId]),
