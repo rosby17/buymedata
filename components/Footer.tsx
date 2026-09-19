@@ -20,7 +20,7 @@ export default function Footer() {
               className="text-2xl font-bold cursor-pointer tracking-tight"
               style={{ color: "#1b1c19" }}
             >
-              Top Up My Data
+              Buy Me Data
             </span>
           </Link>
           <p className="mt-4 text-xs leading-relaxed" style={{ color: "#5b403f" }}>
@@ -113,7 +113,7 @@ export default function Footer() {
         style={{ maxWidth: "1200px", borderColor: "rgba(228, 189, 188, 0.3)" }}
       >
         <p className="text-xs" style={{ color: "#5b403f" }}>
-          © 2024 Top Up My Data. Tous droits réservés. Fait avec ❤️ pour propulser les créateurs africains.
+          © 2024 Buy Me Data. Tous droits réservés. Fait avec ❤️ pour propulser les créateurs africains.
         </p>
       </div>
     </footer>

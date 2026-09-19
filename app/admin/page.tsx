@@ -60,7 +60,7 @@ export default function AdminDashboard() {
             Tableau de bord administrateur
           </h1>
           <p className="text-sm" style={{ color: "#5b403f" }}>
-            Bienvenue sur Top Up My Data. Voici un aperçu des performances de la plateforme.
+            Bienvenue sur Buy Me Data. Voici un aperçu des performances de la plateforme.
           </p>
         </header>
 

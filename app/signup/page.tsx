@@ -49,7 +49,7 @@ export default function SignupPage() {
             Créer. Soutenir.<br />S&apos;élever ensemble.
           </h2>
           <p className="text-lg opacity-90 max-w-md">
-            Rejoignez la communauté Top Up My Data. Financez la créativité et propulsez les créateurs africains.
+            Rejoignez la communauté Buy Me Data. Financez la créativité et propulsez les créateurs africains.
           </p>
         </div>
       </div>
@@ -64,7 +64,7 @@ export default function SignupPage() {
           <Link href="/" className="mb-8 flex items-center gap-3">
             <TopUpLogo className="w-10 h-10" />
             <span className="text-2xl font-bold tracking-tight" style={{ color: "#b20024" }}>
-              Top Up My Data
+              Buy Me Data
             </span>
           </Link>
 

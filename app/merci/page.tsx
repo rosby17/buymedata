@@ -80,7 +80,7 @@ function ConfirmationInner() {
     minute: "2-digit",
   });
 
-  const shareText = `Je viens d'offrir ⚡ ${amount / 500} Go de connexion (${amount.toLocaleString("fr-FR")} FCFA) à Juliet sur Top Up My Data ! 🎉 Rejoignez le mouvement.`;
+  const shareText = `Je viens d'offrir ⚡ ${amount / 500} Go de connexion (${amount.toLocaleString("fr-FR")} FCFA) à Juliet sur Buy Me Data ! 🎉 Rejoignez le mouvement.`;
   const shareUrl = typeof window !== "undefined" ? window.location.origin : "https://topupmydata.app";
 
   const shareActions = [
@@ -315,7 +315,7 @@ function ConfirmationInner() {
           {/* Footer note */}
           <p className="text-xs" style={{ color: "#906f6e" }}>
             Un reçu a été envoyé à votre adresse email. Merci de faire partie de
-            la communauté Top Up My Data ⚡💙
+            la communauté Buy Me Data ⚡💙
           </p>
         </div>
       </main>

@@ -12,19 +12,10 @@ const NAV_LINKS = [
   { label: "Tableau de bord", href: "/dashboard" },
 ];
 
-/* ── Top Up My Data Custom SVG Logo ── */
+/* ── Buy Me Data mascot logo ── */
 export function TopUpLogo({ className = "w-8 h-8" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 100 90" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      {/* Outer wifi wave */}
-      <path d="M 15 35 A 45 45 0 0 1 85 35" stroke="#b20024" strokeWidth="10" strokeLinecap="round" />
-      {/* Inner wifi wave */}
-      <path d="M 28 50 A 28 28 0 0 1 72 50" stroke="#b20024" strokeWidth="10" strokeLinecap="round" />
-      {/* Coin circle */}
-      <circle cx="50" cy="70" r="18" fill="#b20024" />
-      <circle cx="50" cy="70" r="14" stroke="#ffffff" strokeWidth="1.5" fill="#b20024" />
-      <text x="50" y="76" textAnchor="middle" fill="#ffffff" fontSize="16" fontWeight="800" fontFamily="sans-serif">$</text>
-    </svg>
+    <img src="/buy-me-data-mascot.png" alt="Buy Me Data" className={`${className} object-contain`} />
   );
 }
 
@@ -69,7 +60,7 @@ export default function Navbar({ onSupportClick }: NavbarProps) {
               className="text-2xl font-extrabold tracking-tight cursor-pointer"
               style={{ color: "#b20024" }}
             >
-              Top Up My Data
+              Buy Me Data
             </span>
           </Link>
 

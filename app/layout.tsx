@@ -10,9 +10,10 @@ const workSans = Work_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Top Up My Data – Offrez des gigas à vos créateurs préférés",
+  title: "Buy Me Data – Soutenez vos créateurs préférés",
+  icons: { icon: "/buy-me-data-mascot.png" },
   description:
-    "La 1ère plateforme qui transforme vos dons en connexion internet (500 FCFA = 1 Go). Propulsez la créativité africaine en rechargeant la data de vos créateurs favoris !",
+    "La plateforme qui permet de remercier et soutenir directement les créateurs de contenu.",
 };
 
 export default function RootLayout({

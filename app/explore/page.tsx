@@ -544,28 +544,28 @@ function ExploreInner() {
           )}
         </section>
 
-        {/* ── Pourquoi choisir Top Up My Data ? ── */}
+        {/* ── Pourquoi choisir Buy Me Data ? ── */}
         <section id="pourquoi-nous-choisir" className="bg-white rounded-3xl p-8 md:p-12 border shadow-sm my-16" style={{ borderColor: "#e4bdbc" }}>
           <div className="max-w-4xl mx-auto text-center space-y-6">
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-full mb-2" style={{ backgroundColor: "#ffdad8", color: "#b20024" }}>
               <span className="material-symbols-outlined text-2xl">campaign</span>
             </div>
             <h2 className="text-3xl font-bold" style={{ color: "#1b1c19", letterSpacing: "-0.01em" }}>
-              Pourquoi choisir <span style={{ color: "#b20024" }}>Top Up My Data</span> ?
+              Pourquoi choisir <span style={{ color: "#b20024" }}>Buy Me Data</span> ?
             </h2>
             <p className="text-lg leading-relaxed" style={{ color: "#5b403f" }}>
               En Afrique, la majorité des créateurs de contenu ne sont pas rémunérés à leur juste valeur par les plateformes digitales. Les revenus liés à la monétisation classique sont souvent insignifiants face aux coûts de production réels.
             </p>
             <p className="text-lg leading-relaxed font-semibold" style={{ color: "#496546" }}>
-              Face à cette frustration, nous avons créé Top Up My Data : un espace où votre communauté peut vous soutenir financièrement et directement, afin que vous puissiez financer sereinement votre matériel, vos factures et votre production.
+              Face à cette frustration, nous avons créé Buy Me Data : un espace où votre communauté peut vous soutenir financièrement et directement, afin que vous puissiez financer sereinement votre matériel, vos factures et votre production.
             </p>
           </div>
         </section>
 
-        {/* ── Ce que les gens pensent de Top Up My Data ── */}
+        {/* ── Ce que les gens pensent de Buy Me Data ── */}
         <section className="space-y-6 my-16">
           <h2 className="text-2xl font-bold text-center" style={{ color: "#1b1c19" }}>
-            Ce que les gens pensent de <span style={{ color: "#b20024" }}>Top Up My Data</span>
+            Ce que les gens pensent de <span style={{ color: "#b20024" }}>Buy Me Data</span>
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
