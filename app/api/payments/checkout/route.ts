@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import crypto from "node:crypto";
 import { createCheckout, WarapPayError } from "@/lib/warappay";
-import { withTransaction } from "@/lib/db";
+import { query, withTransaction } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -15,9 +15,11 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "email, customer_name and amount are required" }, { status: 400 });
     }
     const orderId = crypto.randomUUID();
-    const creatorId = "00000000-0000-0000-0000-000000000001";
+    const creatorId = String(body.creator_id || "");
+    if (!creatorId) return Response.json({ error: "creator_id is required" }, { status: 400 });
+    const creator = await query("SELECT id FROM profiles WHERE id = $1 AND role = 'creator'", [creatorId]);
+    if (!creator.rows[0]) return Response.json({ error: "Creator not found" }, { status: 404 });
     await withTransaction(async (client) => {
-      await client.query(`INSERT INTO profiles (id, email, full_name, role) VALUES ($1, $2, $3, 'creator') ON CONFLICT (id) DO NOTHING`, [creatorId, "juliet@buymedata.app", "Juliet"]);
       await client.query(`INSERT INTO orders (id, creator_id, email, customer_name, customer_phone, amount, message, status) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')`, [orderId, creatorId, String(body.email), String(body.customer_name), body.customer_phone ? String(body.customer_phone) : null, Number(body.amount), body.message ? String(body.message) : null]);
     });
     const result = await createCheckout({

@@ -481,7 +481,7 @@ function ExploreInner() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {searchedCreators.map((creator, i) => (
-                <Link href="/" key={creator.id}>
+                <Link href={`/pay?creator_id=${creator.id}`} key={creator.id}>
                   <div
                     className="bg-white rounded-2xl border overflow-hidden flex flex-col cursor-pointer transition-all"
                     style={{ borderColor: "#e4bdbc" }}

@@ -29,6 +29,7 @@ function PaymentFlowInner() {
 
   const initialAmount = parseInt(searchParams.get("amount") || "0") || 0;
   const initialMessage = decodeURIComponent(searchParams.get("message") || "");
+  const creatorId = searchParams.get("creator_id") || "";
 
   const [step, setStep] = useState(1);
   const [currentAmount, setCurrentAmount] = useState(initialAmount);
@@ -67,7 +68,7 @@ function PaymentFlowInner() {
     setOverlayState("loading");
     setPaymentError("");
     try {
-      const response = await fetch("/api/payments/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ amount: currentAmount, email, customer_name: customerName, message, customer_phone: "" }) });
+      const response = await fetch("/api/payments/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ creator_id: creatorId, amount: currentAmount, email, customer_name: customerName, message, customer_phone: "" }) });
       const data = await response.json();
       if (!response.ok || !data.checkout_url) throw new Error(data.error || "Impossible de créer le paiement");
       window.location.assign(data.checkout_url);
