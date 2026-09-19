@@ -18,7 +18,10 @@ export async function GET(request: Request) {
   const saved = (await cookies()).get("google_oauth_state")?.value;
   if (!state || state !== saved) return Response.json({ error: "Invalid OAuth state" }, { status: 400 });
   const tokenResponse = await fetch("https://oauth2.googleapis.com/token", { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ code, client_id: process.env.GOOGLE_CLIENT_ID || "", client_secret: process.env.GOOGLE_CLIENT_SECRET || "", redirect_uri: `${origin()}/api/auth/google`, grant_type: "authorization_code" }) });
-  if (!tokenResponse.ok) return Response.json({ error: "Google authentication failed" }, { status: 401 });
+  if (!tokenResponse.ok) {
+    console.error("Google OAuth token exchange failed", tokenResponse.status, await tokenResponse.text());
+    return Response.json({ error: "Google authentication failed" }, { status: 401 });
+  }
   const tokens = await tokenResponse.json();
   const profile = await (await fetch("https://openidconnect.googleapis.com/v1/userinfo", { headers: { Authorization: `Bearer ${tokens.access_token}` } })).json();
   if (!profile.email) return Response.json({ error: "Google account has no email" }, { status: 400 });
