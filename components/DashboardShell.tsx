@@ -20,7 +20,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   const items = [
     ["/dashboard", "home", "Accueil", pathname === "/dashboard"],
     [pageHref, "open_in_new", "Voir ma page", false],
-    [profile?.username ? `/${profile.username}/donate` : "/dashboard/settings", "volunteer_activism", "Me soutenir", false],
+    ["/dashboard/support", "volunteer_activism", "Me soutenir", pathname.startsWith("/dashboard/support")],
     ["/dashboard/campaigns", "flag", "Cagnottes", pathname.startsWith("/dashboard/campaigns") || pathname.startsWith("/dashboard/create-campaign")],
     ["/dashboard/withdrawals", "payments", "Retraits", pathname.startsWith("/dashboard/withdrawals")],
     ["/dashboard/settings", "edit_square", "Ma page de soutien", pathname.startsWith("/dashboard/settings")],
