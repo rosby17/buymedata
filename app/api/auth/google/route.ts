@@ -6,7 +6,7 @@ import { createSession, sessionCookie, cookieOptions } from "@/lib/auth";
 import { signPayload, readPayload, safeEqual, validUsername } from "@/lib/auth-security";
 const keys=createRemoteJWKSet(new URL("https://www.googleapis.com/oauth2/v3/certs"));
 export async function GET(request:Request){
- const origin=process.env.NEXT_PUBLIC_SITE_URL||new URL(request.url).origin;
+ const origin=process.env.NEXT_PUBLIC_SITE_URL||"https://buymedata.tools-cl.com";
  const redirectUri=process.env.GOOGLE_REDIRECT_URI||origin+"/api/auth/google";
  const url=new URL(request.url),jar=await cookies();
  const fail=(reason:string)=>Response.redirect(origin+"/login?error="+encodeURIComponent(reason));
