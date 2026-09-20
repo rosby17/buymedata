@@ -23,9 +23,9 @@ export default function Navbar({ onSupportClick, dashboardLayout = false }: Navb
 
   useEffect(() => {
     fetch("/api/auth/session", { cache: "no-store" })
-      .then(async (response) => response.ok ? (await response.json()).user : null)
+      .then(async (response) => { if (response.status === 401) return null; if (!response.ok) throw new Error("Session check unavailable"); return (await response.json()).user; })
       .then(setUser)
-      .catch(() => setUser(null));
+      .catch(() => undefined);
   }, [pathname]);
 
   const handleLogout = async () => {

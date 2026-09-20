@@ -119,7 +119,7 @@ ALTER TABLE profiles ADD COLUMN IF NOT EXISTS google_sub TEXT UNIQUE;
 CREATE TABLE IF NOT EXISTS auth_email_tokens (
   token_hash TEXT PRIMARY KEY,
   email TEXT NOT NULL,
-  purpose TEXT NOT NULL CHECK (purpose IN ('register','verify')),
+  purpose TEXT NOT NULL CHECK (purpose IN ('register','verify','reset')),
   payload JSONB NOT NULL DEFAULT '{}',
   expires_at TIMESTAMPTZ NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()

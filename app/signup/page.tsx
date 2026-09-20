@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { TopUpLogo } from "@/components/Navbar";
 
@@ -59,13 +60,17 @@ export default function SignupPage() {
     <div className="min-h-screen flex flex-col md:flex-row text-[#1b1c19]" style={{ backgroundColor: "#fbf9f4" }}>
       {/* ── Left Side: Editorial Image (Hidden on mobile) ── */}
       <div className="hidden md:flex relative w-full md:w-1/2 lg:w-3/5 h-64 md:h-screen">
-        <img
-          className="absolute inset-0 w-full h-full object-cover"
-          src="/signup-hero.png"
+        <Image
+          fill
+          preload
+          sizes="(min-width: 1024px) 60vw, 50vw"
+          quality={78}
+          className="object-cover"
+          src="/signup-hero.jpg"
           alt="Créatrice préparant sa page Buy Me Data"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-        <div className="absolute bottom-12 left-12 right-12 text-white">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/15"></div>
+        <div className="absolute bottom-12 left-12 right-12 text-white drop-shadow-[0_3px_10px_rgba(0,0,0,0.8)]">
           <h2 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">
             Créez votre page.<br />Recevez du soutien.
           </h2>
