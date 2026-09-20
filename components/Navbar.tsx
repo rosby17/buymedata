@@ -43,8 +43,8 @@ export default function Navbar({ onSupportClick, dashboardLayout = false }: Navb
 
   return (
     <nav
-      className={`sticky top-0 z-50 border-b shadow-sm h-16 transition-colors ${dashboardLayout ? "lg:ml-64" : ""}`}
-      style={{ backgroundColor: "#fbf9f4", borderColor: "#e4bdbc" }}
+      className={`sticky top-0 z-50 shadow-sm h-16 transition-colors ${dashboardLayout ? "lg:ml-64" : ""}`}
+      style={{ backgroundColor: "#fbf9f4" }}
     >
       <div
         className="flex justify-between items-center w-full h-full px-5 sm:px-8"

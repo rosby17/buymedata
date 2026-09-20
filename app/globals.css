@@ -95,6 +95,36 @@ body {
   font-family: 'Work Sans', sans-serif;
 }
 
+/* All native selects share the Buy Me Data control language. */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 44px;
+  padding-right: 2.75rem !important;
+  color: #5b403f;
+  background-color: #ffffff;
+  background-image: linear-gradient(45deg, transparent 50%, #b20024 50%), linear-gradient(135deg, #b20024 50%, transparent 50%);
+  background-position: calc(100% - 18px) 19px, calc(100% - 13px) 19px;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+select:hover {
+  border-color: #d99a99;
+}
+
+select:focus {
+  border-color: #b20024 !important;
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(178, 0, 36, 0.1);
+}
+
+select option {
+  background: #ffffff;
+  color: #1b1c19;
+}
+
 /* Keep dashboard subpages aligned to the same centered creator workspace. */
 main.max-w-3xl {
   max-width: 64rem;
