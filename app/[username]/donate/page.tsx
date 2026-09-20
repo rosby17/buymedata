@@ -9,7 +9,7 @@ export default async function PersonalSupportPage({ params }: { params: Promise<
     FROM profiles WHERE username=$1 AND role='creator'`, [username.toLowerCase()]);
   const creator = result.rows[0];
 
-  if (!creator) return <main className="grid min-h-screen place-items-center bg-[#fbf9f4] px-5 text-center"><div><h1 className="text-3xl font-bold">Page introuvable</h1><p className="mt-2 text-sm text-[#6f5a57]">Ce lien de soutien n’est pas encore disponible.</p><Link href="/explore" className="mt-6 inline-block rounded-xl bg-[#b20024] px-5 py-3 text-sm font-bold text-white">Explorer les créateurs</Link></div></main>;
+  if (!creator) return <main className="grid min-h-screen place-items-center bg-[#fbf9f4] px-5 text-center"><div><h1 className="text-3xl font-bold">Page introuvable</h1><p className="mt-2 text-sm text-[#6f5a57]">Ce lien de soutien n’est pas encore disponible.</p><Link href="/explore" className="mt-6 inline-block rounded-xl bg-[#b20024] px-5 py-3 text-sm font-bold text-white">Explorer les cagnottes</Link></div></main>;
 
   const displayName = creator.username || creator.name;
   const distinctBio = creator.bio && creator.bio.trim().toLowerCase() !== displayName.trim().toLowerCase() && creator.bio.trim().toLowerCase() !== creator.name.trim().toLowerCase() ? creator.bio : "";

@@ -1,31 +1,12 @@
-import crypto from "node:crypto";
 import { cookies } from "next/headers";
-
-const COOKIE = "buy_me_data_session";
-const secret = () => process.env.AUTH_SECRET || "development-only-change-me";
-
-export function hashPassword(password: string) {
-  const salt = crypto.randomBytes(16).toString("hex");
-  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
-  return `${salt}:${hash}`;
+import { query } from "./db";
+import { readSession } from "./auth-security";
+export { createSession, hashPassword, verifyPassword, readSession } from "./auth-security";
+export const sessionCookie = "buy_me_data_session";
+export const cookieOptions = { httpOnly:true, sameSite:"lax" as const, secure:process.env.NODE_ENV === "production", path:"/", maxAge:30*86400 };
+export async function currentUserId() {
+  const id = readSession((await cookies()).get(sessionCookie)?.value);
+  if (!id) return null;
+  const result = await query("SELECT id FROM profiles WHERE id=$1 AND email_verified_at IS NOT NULL", [id]);
+  return result.rows[0]?.id || null;
 }
-
-export function verifyPassword(password: string, encoded: string) {
-  const [salt, stored] = encoded.split(":");
-  if (!salt || !stored) return false;
-  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
-  return crypto.timingSafeEqual(Buffer.from(hash, "hex"), Buffer.from(stored, "hex"));
-}
-
-function sign(value: string) { return crypto.createHmac("sha256", secret()).update(value).digest("base64url"); }
-export function createSession(userId: string) { const value = `${userId}.${Date.now()}`; return `${value}.${sign(value)}`; }
-export function readSession(token?: string) {
-  if (!token) return null;
-  const [userId, issued, signature] = token.split(".");
-  const value = `${userId}.${issued}`;
-  if (!userId || !issued || !signature || !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(sign(value)))) return null;
-  if (Date.now() - Number(issued) > 1000 * 60 * 60 * 24 * 30) return null;
-  return userId;
-}
-export async function currentUserId() { return readSession((await cookies()).get(COOKIE)?.value); }
-export const sessionCookie = COOKIE;

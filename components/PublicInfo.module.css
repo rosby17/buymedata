@@ -1,0 +1,9 @@
+.page { background:#fbf9f4; min-height:100vh; color:#252522; }
+.page header { max-width:1100px; padding:24px; margin:auto; display:flex; justify-content:space-between; gap:20px; align-items:center; }
+.page header a { display:flex; align-items:center; gap:10px; font-weight:700; color:#b20024; }
+.page main { max-width:820px; margin:auto; padding:50px 24px 80px; }
+.page h1 { font-size:clamp(30px,5vw,48px); font-weight:800; letter-spacing:-1.5px; margin-bottom:32px; }
+.page h2 { font-size:23px; font-weight:700; margin:32px 0 12px; }
+.page p,.page li { font-size:16px; line-height:1.85; color:#655853; margin:12px 0; }
+.page main a { color:#b20024; text-decoration:underline; text-underline-offset:4px; overflow-wrap:anywhere; }
+.page ul { padding-left:22px; list-style:disc; }

@@ -2,7 +2,7 @@ import { query, withTransaction } from "@/lib/db";
 import { currentUserId } from "@/lib/auth";
 
 // Double the reference 5% platform fee and 0.5% payout fee: 11% total.
-export const WITHDRAWAL_FEE_RATE = 0.11;
+const WITHDRAWAL_FEE_RATE = 0.11;
 
 export async function GET() {
   const userId = await currentUserId();
@@ -24,7 +24,7 @@ export async function GET() {
       COALESCE(SUM(amount) FILTER (WHERE status='completed' AND created_at >= now()-interval '90 days'),0)::bigint AS last90,
       COUNT(*) FILTER (WHERE status='completed')::int AS supporters
       FROM orders WHERE creator_id=$1`, [userId]),
-    query("SELECT id, customer_name AS name, message, amount, created_at FROM orders WHERE creator_id = $1 ORDER BY created_at DESC LIMIT 20", [userId]),
+    query("SELECT id, customer_name AS name, message, amount, status, created_at FROM orders WHERE creator_id = $1 ORDER BY created_at DESC LIMIT 20", [userId]),
     query("SELECT id, title, target_amount AS total, collected_amount AS current, status FROM campaigns WHERE creator_id = $1 ORDER BY created_at DESC", [userId]),
     query("SELECT id, amount, fee_amount, net_amount, method, destination, status, created_at FROM withdrawals WHERE creator_id = $1 ORDER BY created_at DESC LIMIT 10", [userId]),
   ]);

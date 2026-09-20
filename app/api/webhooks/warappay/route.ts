@@ -20,8 +20,9 @@ export async function POST(request: Request) {
     const orderId = (event.data as { meta?: { order_id?: string } }).meta?.order_id;
     if (!orderId) return;
     const nextStatus = event.event === "checkout.completed" ? "completed" : "failed";
-    const order = await client.query(`SELECT status, campaign_id, amount FROM orders WHERE id = $1 FOR UPDATE`, [orderId]);
-    if (!order.rows[0]) return;
+    const order = await client.query(`SELECT o.status, o.campaign_id, o.amount FROM orders o JOIN payments p ON p.order_id=o.id WHERE o.id=$1 AND p.provider='warappay' AND p.provider_payment_id=$2 FOR UPDATE OF o`, [orderId, event.data!.id]);
+    if (!order.rows[0]) throw new Error("Payment not recorded yet or reference mismatch");
+    if (["completed","refunded"].includes(order.rows[0].status)) return;
     await client.query(`UPDATE payments SET status = $2, raw_status = $3, updated_at = now() WHERE order_id = $1`, [orderId, nextStatus, event.data!.status || nextStatus]);
     await client.query(`UPDATE orders SET status = $2, updated_at = now() WHERE id = $1`, [orderId, nextStatus]);
     if (nextStatus === "completed" && order.rows[0].status !== "completed" && order.rows[0].campaign_id) {

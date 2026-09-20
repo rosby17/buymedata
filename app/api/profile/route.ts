@@ -1,3 +1,4 @@
+import { validUsername, sameOrigin } from "@/lib/auth-security";
 import { query } from "@/lib/db";
 import { currentUserId } from "@/lib/auth";
 
@@ -10,16 +11,17 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
+  if (!sameOrigin(request)) return Response.json({error:"Origine refusée"},{status:403});
   const id = await currentUserId();
   if (!id) return Response.json({ error: "Authentication required" }, { status: 401 });
   const body = await request.json().catch(() => ({}));
   const name = typeof body.full_name === "string" ? body.full_name.trim() : undefined;
   const phone = typeof body.phone === "string" ? body.phone.trim() : undefined;
   const avatar = typeof body.avatar_url === "string" ? body.avatar_url.trim() : undefined;
-  const username = typeof body.username === "string" ? body.username.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "") : undefined;
+  const username = typeof body.username === "string" ? body.username.trim().toLowerCase() : undefined;
   const bio = typeof body.bio === "string" ? body.bio.trim().slice(0, 240) : undefined;
   const category = typeof body.category === "string" ? body.category.trim().slice(0, 80) : undefined;
-  if (username !== undefined && username.length < 3) return Response.json({ error: "Le nom public doit contenir au moins 3 caractères" }, { status: 400 });
+  if (username !== undefined && !validUsername(username)) return Response.json({ error: "Username indisponible ou invalide (3 à 30 caractères)." }, { status: 400 });
   try {
     const result = await query("UPDATE profiles SET full_name = COALESCE($2, full_name), phone = COALESCE($3, phone), avatar_url = COALESCE($4, avatar_url), username = COALESCE($5, username), bio = COALESCE($6, bio), category = COALESCE($7, category), onboarding_completed = CASE WHEN COALESCE($2, full_name) <> '' AND COALESCE($5, username) <> '' AND COALESCE($6, bio) <> '' THEN true ELSE onboarding_completed END, updated_at = now() WHERE id = $1 RETURNING id, email, full_name, role, phone, avatar_url, username, bio, category, onboarding_completed", [id, name || null, phone || null, avatar || null, username || null, bio || null, category || null]);
     return Response.json({ profile: result.rows[0] });

@@ -6,4 +6,4 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## UI consistency
 
-Every `<select>` control must use the Buy Me Data design system styling. Never leave a native browser select unstyled; use the shared global select treatment in `app/globals.css` or an equivalent branded component.
+Use `components/BrandSelect.tsx` for all selection menus. Do not introduce native `<select>` menus: CSS cannot consistently style their open popup across browsers. Preserve keyboard navigation, visible focus, accessible labels, form submission, outside-click dismissal and Escape.

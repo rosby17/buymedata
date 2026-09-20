@@ -18,7 +18,6 @@ export function TopUpLogo({ className = "w-8 h-8" }: { className?: string }) {
 export default function Navbar({ onSupportClick, dashboardLayout = false }: NavbarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [search, setSearch] = useState("");
   const [user, setUser] = useState<{ name: string; email: string; username?: string | null; avatar_url?: string | null } | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
 
@@ -33,7 +32,7 @@ export default function Navbar({ onSupportClick, dashboardLayout = false }: Navb
     await fetch("/api/auth/session", { method: "DELETE" }).catch(() => null);
     setUser(null);
     setShowDropdown(false);
-    router.push("/explore");
+    router.push("/");
   };
 
   const isProfile = pathname === "/";
@@ -51,7 +50,7 @@ export default function Navbar({ onSupportClick, dashboardLayout = false }: Navb
       >
         {/* Logo + Nav Links */}
         <div className="flex items-center gap-8">
-          {!dashboardLayout && <Link href="/explore" className="flex items-center gap-2 group">
+          {!dashboardLayout && <Link href="/" className="flex items-center gap-2 group">
             <TopUpLogo className="w-8 h-8 transition-transform group-hover:scale-105" />
             <span className="text-2xl font-extrabold tracking-tight cursor-pointer" style={{ color: "#b20024" }}><span className="text-[1.05rem] sm:text-[1.2rem] font-bold tracking-tight">Buy Me Data</span></span>
           </Link>}
@@ -60,41 +59,6 @@ export default function Navbar({ onSupportClick, dashboardLayout = false }: Navb
 
         {/* Right side */}
         <div className="flex items-center gap-4">
-          {/* Search is only useful on the creator directory, never in the dashboard. */}
-          {pathname === "/explore" && (
-            <div className="relative hidden lg:block">
-              <span
-                className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2"
-                style={{ color: "#5b403f", fontSize: "20px" }}
-              >
-                search
-              </span>
-              <input
-                type="text"
-                placeholder="Rechercher un créateur..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && search.trim()) {
-                    router.push(`/explore?q=${encodeURIComponent(search.trim())}`);
-                  }
-                }}
-                className="outline-none text-sm"
-                style={{
-                  paddingLeft: "36px",
-                  paddingRight: "16px",
-                  paddingTop: "8px",
-                  paddingBottom: "8px",
-                  backgroundColor: "#f0eee9",
-                  border: "1px solid #e4bdbc",
-                  borderRadius: "9999px",
-                  width: "220px",
-                  color: "#1b1c19",
-                }}
-              />
-            </div>
-          )}
-
           {/* Back to profile — on /pay and /merci */}
           {(isPayment || isMerci) && (
             <Link href="/">
@@ -208,7 +172,7 @@ export default function Navbar({ onSupportClick, dashboardLayout = false }: Navb
                   </Link>
                 </>
               ) : (
-                <Link href="/explore">
+                <Link href="/">
                   <button
                     className="text-sm font-medium transition-colors hover:opacity-80 flex items-center gap-1"
                     style={{ color: "#5b403f" }}

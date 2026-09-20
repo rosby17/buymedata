@@ -8,6 +8,7 @@ import { currentUserId } from "@/lib/auth";
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
+  let orderId: string | null = null;
   try {
     const body = await request.json();
     const productCode = process.env.WARAPPAY_PRODUCT_CODE;
@@ -15,7 +16,7 @@ export async function POST(request: NextRequest) {
     const origin = request.nextUrl.origin;
     if (paymentMethod === "mobile_money" && !productCode) return Response.json({ error: "Le paiement Mobile Money n'est pas configuré" }, { status: 503 });
     if (!body?.amount) return Response.json({ error: "amount is required" }, { status: 400 });
-    const orderId = crypto.randomUUID();
+    orderId = crypto.randomUUID();
     // Identity is optional for a donor. Payment providers still need stable values,
     // so anonymous donations receive internal placeholders that are never shown publicly.
     const customerName = String(body.customer_name || "").trim() || "Donateur anonyme";
@@ -46,6 +47,9 @@ export async function POST(request: NextRequest) {
     await queryPayment(orderId, result, paymentMethod === "mobile_money" ? "warappay" : "taramoney");
     return Response.json({ ...result, order_id: orderId });
   } catch (error) {
+    if (orderId && (error instanceof WarapPayError || error instanceof TaraMoneyError) && error.status >= 400 && error.status < 500) {
+      await query("UPDATE orders SET status='failed', updated_at=now() WHERE id=$1 AND status='pending'",[orderId]);
+    }
     if (error instanceof WarapPayError || error instanceof TaraMoneyError) return Response.json({ error: error.message }, { status: error.status });
     return Response.json({ error: "Unable to create checkout" }, { status: 500 });
   }
@@ -53,6 +57,7 @@ export async function POST(request: NextRequest) {
 
 async function queryPayment(orderId: string, result: { id: string; status: string; checkout_url: string | null }, provider: string) {
   const { query } = await import("@/lib/db");
-  await query(`INSERT INTO payments (order_id, provider, provider_payment_id, checkout_url, status, raw_status, amount) SELECT $1, $2, $3, $4, $5, $5, amount FROM orders WHERE id = $1`, [orderId, provider, result.id, result.checkout_url, result.status]);
-  await query(`UPDATE orders SET status = $2, updated_at = now() WHERE id = $1`, [orderId, result.status]);
+  const status = result.status === "failed" ? "failed" : "waiting_payment";
+  await query(`INSERT INTO payments (order_id, provider, provider_payment_id, checkout_url, status, raw_status, amount) SELECT $1, $2, $3, $4, $5, $5, amount FROM orders WHERE id = $1`, [orderId, provider, result.id, result.checkout_url, status]);
+  await query(`UPDATE orders SET status = $2, updated_at = now() WHERE id = $1 AND status IN ('pending','waiting_payment')`, [orderId, status]);
 }

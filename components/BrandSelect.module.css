@@ -1,0 +1,8 @@
+.root { position:relative; min-width:0; }
+.trigger { display:flex; justify-content:space-between; align-items:center; gap:24px; min-height:44px; width:100%; padding:10px 14px; border:1px solid #ead6d2; border-radius:12px; background:#fff; color:#5b403f; font:inherit; font-size:14px; font-weight:600; cursor:pointer; }
+.trigger span { color:#b20024; }.trigger:disabled { opacity:.5; cursor:not-allowed; }
+.trigger:focus-visible,.list:focus-visible { outline:3px solid #b2002433; border-color:#b20024; }
+.list { position:absolute; z-index:60; top:calc(100% + 6px); left:0; min-width:100%; width:max-content; max-width:min(320px,90vw); padding:6px; list-style:none; background:white; border:1px solid #ead6d2; border-radius:14px; box-shadow:0 12px 32px #5b403f22; color:#5b403f; }
+.list li { padding:10px 12px; display:flex; justify-content:space-between; gap:20px; border-radius:9px; font-size:14px; cursor:pointer; }
+.list li[aria-selected="true"] { color:#b20024; font-weight:700; }
+.list .active { background:#fff2f1; color:#b20024; }
