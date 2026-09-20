@@ -6,8 +6,19 @@ type Profile = { full_name?: string; username?: string; category?: string; avata
 
 export default function SupportPageManager() {
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
-  useEffect(() => { fetch("/api/profile", { cache: "no-store" }).then(async r => { if (r.status === 401) { location.href = "/login"; return; } const d = await r.json(); setProfile(d.profile); }).catch(() => null); }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 8000);
+    fetch("/api/profile", { cache: "no-store", signal: controller.signal }).then(async response => {
+      if (response.status === 401) { window.location.replace("/login?next=%2Fdashboard%2Fsupport"); return; }
+      if (!response.ok) throw new Error("Profile unavailable");
+      setProfile((await response.json()).profile);
+    }).catch(() => setError("Impossible de charger votre page de soutien.")).finally(() => window.clearTimeout(timeout));
+    return () => { window.clearTimeout(timeout); controller.abort(); };
+  }, []);
+  if (error) return <main className="mx-auto max-w-5xl px-5 py-20 text-center"><p className="font-semibold text-[#1b1c19]">{error}</p><button onClick={() => window.location.reload()} className="mt-4 rounded-xl bg-[#b20024] px-5 py-3 text-sm font-bold text-white">Réessayer</button></main>;
   if (!profile) return <main className="mx-auto max-w-5xl px-5 py-20 text-center text-[#6f5a57]">Chargement…</main>;
   const displayName = profile.username || profile.full_name || "votre page";
   const distinctBio = profile.bio && profile.bio.trim().toLowerCase() !== displayName.trim().toLowerCase() && profile.bio.trim().toLowerCase() !== (profile.full_name || "").trim().toLowerCase() ? profile.bio : "";

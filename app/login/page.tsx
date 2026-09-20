@@ -2,11 +2,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { TopUpLogo } from "@/components/Navbar";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -32,7 +30,8 @@ export default function LoginPage() {
       if (!response.ok) throw new Error(payload.error || "Connexion impossible");
       if (payload.verification_required) { setMessage(payload.message || "Consultez votre e-mail pour confirmer votre adresse."); return; }
       sessionStorage.setItem("isLoggedIn", "true");
-      router.push("/dashboard");
+      const next = new URLSearchParams(window.location.search).get("next");
+      window.location.assign(next?.startsWith("/dashboard") ? next : "/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Connexion impossible");
     } finally {

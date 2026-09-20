@@ -19,13 +19,14 @@ export default function Navbar({ onSupportClick, dashboardLayout = false }: Navb
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<{ name: string; email: string; username?: string | null; avatar_url?: string | null } | null>(null);
+  const [sessionResolved, setSessionResolved] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/session", { cache: "no-store" })
       .then(async (response) => { if (response.status === 401) return null; if (!response.ok) throw new Error("Session check unavailable"); return (await response.json()).user; })
-      .then(setUser)
-      .catch(() => undefined);
+      .then(value => { setUser(value); setSessionResolved(true); })
+      .catch(() => setSessionResolved(true));
   }, [pathname]);
 
   const handleLogout = async () => {
@@ -89,7 +90,7 @@ export default function Navbar({ onSupportClick, dashboardLayout = false }: Navb
           )}
 
           {/* Auth State Buttons / Dropdown */}
-          {user ? (
+          {!sessionResolved ? <div className="h-9 w-28 animate-pulse rounded-lg bg-[#ead6d2]/60" aria-label="Vérification de la session" /> : user ? (
             <div className="relative">
               <div
                 onClick={() => setShowDropdown(!showDropdown)}
