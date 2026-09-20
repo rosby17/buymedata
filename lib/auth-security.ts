@@ -45,6 +45,24 @@ export function validUsername(value: string) {
 }
 export function validEmail(value: string) { return value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value); }
 export function sameOrigin(request: Request) {
-  const expected = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
-  return request.headers.get("origin") === new URL(expected).origin;
+  const supplied = request.headers.get("origin");
+  if (!supplied) return false;
+  try {
+    const origin = new URL(supplied).origin;
+    const configured = process.env.NEXT_PUBLIC_SITE_URL;
+    if (configured && origin === new URL(configured).origin) return true;
+
+    // Next receives the container URL behind Coolify/Traefik. Compare against
+    // the public host preserved by the trusted reverse proxy instead.
+    const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+    const host = forwardedHost || request.headers.get("host");
+    if (!host) return false;
+    const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+    const protocol = forwardedProto === "http" || forwardedProto === "https"
+      ? forwardedProto
+      : new URL(request.url).protocol.replace(":", "");
+    return origin === `${protocol}://${host}`;
+  } catch {
+    return false;
+  }
 }
