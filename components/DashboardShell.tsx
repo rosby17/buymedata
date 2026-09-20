@@ -20,14 +20,15 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   const items = [
     ["/dashboard", "home", "Accueil", pathname === "/dashboard"],
     [pageHref, "open_in_new", "Voir ma page", false],
+    [profile?.username ? `/${profile.username}/donate` : "/dashboard/settings", "volunteer_activism", "Me soutenir", false],
     ["/dashboard/campaigns", "flag", "Cagnottes", pathname.startsWith("/dashboard/campaigns") || pathname.startsWith("/dashboard/create-campaign")],
     ["/dashboard/withdrawals", "payments", "Retraits", pathname.startsWith("/dashboard/withdrawals")],
-    ["/dashboard/settings", "settings", "Paramètres", pathname.startsWith("/dashboard/settings")],
+    ["/dashboard/settings", "edit_square", "Ma page de soutien", pathname.startsWith("/dashboard/settings")],
+    ["/dashboard/account", "settings", "Paramètres du compte", pathname.startsWith("/dashboard/account")],
   ] as const;
   return <><Navbar /><div className="min-h-[calc(100vh-4rem)] bg-[#f5f3ee]">
     <aside className="fixed inset-y-16 left-0 z-30 hidden w-64 border-r border-[#ead6d2] bg-white lg:block"><div className="flex h-full flex-col p-4">
-      <img src="/buy-me-data-mascot.png" alt="Buy Me Data" className="ml-2 h-10 w-10 object-contain" />
-      <nav className="mt-6 space-y-1">{items.map(([href, icon, label, active], index) => <div key={label}>{index === 2 && <p className="px-3 pb-2 pt-6 text-[10px] font-bold uppercase tracking-[0.16em] text-[#a18d88]">Monétiser</p>}{index === 4 && <p className="px-3 pb-2 pt-6 text-[10px] font-bold uppercase tracking-[0.16em] text-[#a18d88]">Compte</p>}<Link href={href} target={index === 1 ? "_blank" : undefined} className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${active ? "bg-[#fff2f1] text-[#b20024]" : "text-[#1b1c19] hover:bg-[#f5f3ee]"}`}><span className="material-symbols-outlined text-[19px]">{icon}</span>{label}{index === 1 && <span className="material-symbols-outlined ml-auto text-[16px]">open_in_new</span>}</Link></div>)}</nav>
+      <nav className="mt-1 space-y-1">{items.map(([href, icon, label, active], index) => <div key={label}>{index === 2 && <p className="px-3 pb-2 pt-6 text-[10px] font-bold uppercase tracking-[0.16em] text-[#a18d88]">Monétiser</p>}{index === 5 && <p className="px-3 pb-2 pt-6 text-[10px] font-bold uppercase tracking-[0.16em] text-[#a18d88]">Compte</p>}<Link href={href} target={index === 1 ? "_blank" : undefined} className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${active ? "bg-[#fff2f1] text-[#b20024]" : "text-[#1b1c19] hover:bg-[#f5f3ee]"}`}><span className="material-symbols-outlined text-[19px]">{icon}</span>{label}{index === 1 && <span className="material-symbols-outlined ml-auto text-[16px]">open_in_new</span>}</Link></div>)}</nav>
     </div></aside><div className="min-w-0 lg:pl-64">{children}</div>
   </div></>;
 }

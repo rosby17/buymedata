@@ -165,11 +165,11 @@ export default function Navbar({ onSupportClick }: NavbarProps) {
                     Dashboard
                   </Link>
                   <Link
-                    href="/dashboard/settings"
+                    href="/dashboard/account"
                     onClick={() => setShowDropdown(false)}
                     className="block px-4 py-2.5 hover:bg-gray-50 text-[#1b1c19] font-medium"
                   >
-                    Mon compte
+                    Paramètres du compte
                   </Link>
                   <Link
                     href="/signup"
