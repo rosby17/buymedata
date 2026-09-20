@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 interface NavbarProps {
   onSupportClick?: () => void;
   dashboardLayout?: boolean;
+  initialUser?: { name: string; email: string; username?: string | null; avatar_url?: string | null };
 }
 
 /* ── Buy Me Data mascot logo ── */
@@ -15,19 +16,20 @@ export function TopUpLogo({ className = "w-8 h-8" }: { className?: string }) {
   );
 }
 
-export default function Navbar({ onSupportClick, dashboardLayout = false }: NavbarProps) {
+export default function Navbar({ onSupportClick, dashboardLayout = false, initialUser }: NavbarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [user, setUser] = useState<{ name: string; email: string; username?: string | null; avatar_url?: string | null } | null>(null);
-  const [sessionResolved, setSessionResolved] = useState(false);
+  const [user, setUser] = useState<{ name: string; email: string; username?: string | null; avatar_url?: string | null } | null>(initialUser || null);
+  const [sessionResolved, setSessionResolved] = useState(Boolean(initialUser));
   const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
+    if (initialUser) return;
     fetch("/api/auth/session", { cache: "no-store" })
       .then(async (response) => { if (response.status === 401) return null; if (!response.ok) throw new Error("Session check unavailable"); return (await response.json()).user; })
       .then(value => { setUser(value); setSessionResolved(true); })
       .catch(() => setSessionResolved(true));
-  }, [pathname]);
+  }, [pathname, initialUser]);
 
   const handleLogout = async () => {
     await fetch("/api/auth/session", { method: "DELETE" }).catch(() => null);
