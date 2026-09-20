@@ -10,12 +10,29 @@ type Profile = { username?: string };
 export default function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [access, setAccess] = useState<"checking" | "granted" | "unavailable">("checking");
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      fetch("/api/profile", { cache: "no-store" }).then(async r => r.ok ? (await r.json()).profile : null).then(setProfile).catch(() => setProfile(null));
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, []);
+    const controller = new AbortController();
+    fetch("/api/profile", { cache: "no-store", signal: controller.signal })
+      .then(async response => {
+        if (response.status === 401) {
+          window.location.replace(`/login?next=${encodeURIComponent(pathname)}`);
+          return;
+        }
+        if (!response.ok) throw new Error("Profile unavailable");
+        setProfile((await response.json()).profile);
+        setAccess("granted");
+      })
+      .catch(error => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        setAccess("unavailable");
+      });
+    return () => controller.abort();
+  }, [pathname]);
+
+  if (access === "checking") return <main className="grid min-h-screen place-items-center bg-[#f5f3ee] px-5 text-center text-sm text-[#6f5a57]">Vérification de votre session…</main>;
+  if (access === "unavailable") return <main className="grid min-h-screen place-items-center bg-[#f5f3ee] px-5 text-center"><div><p className="font-semibold text-[#1b1c19]">Votre espace ne peut pas être chargé pour le moment.</p><button onClick={() => window.location.reload()} className="mt-4 rounded-xl bg-[#b20024] px-5 py-3 text-sm font-bold text-white">Réessayer</button></div></main>;
+
   const pageHref = profile?.username ? `/${profile.username}` : "/dashboard/settings";
   const items = [
     ["/dashboard", "home", "Accueil", pathname === "/dashboard"],
