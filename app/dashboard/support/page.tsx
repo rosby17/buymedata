@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import DashboardSkeleton from "@/components/DashboardSkeleton";
 
 type Profile = { full_name?: string; username?: string; category?: string; avatar_url?: string; bio?: string };
 
@@ -19,7 +20,7 @@ export default function SupportPageManager() {
     return () => { window.clearTimeout(timeout); controller.abort(); };
   }, []);
   if (error) return <main className="mx-auto max-w-5xl px-5 py-20 text-center"><p className="font-semibold text-[#1b1c19]">{error}</p><button onClick={() => window.location.reload()} className="mt-4 rounded-xl bg-[#b20024] px-5 py-3 text-sm font-bold text-white">Réessayer</button></main>;
-  if (!profile) return <main className="mx-auto max-w-5xl px-5 py-20 text-center text-[#6f5a57]">Chargement…</main>;
+  if (!profile) return <DashboardSkeleton compact />;
   const displayName = profile.username || profile.full_name || "votre page";
   const distinctBio = profile.bio && profile.bio.trim().toLowerCase() !== displayName.trim().toLowerCase() && profile.bio.trim().toLowerCase() !== (profile.full_name || "").trim().toLowerCase() ? profile.bio : "";
   const supportUrl = profile.username ? `https://buymedata.tools-cl.com/${profile.username}/donate` : "";

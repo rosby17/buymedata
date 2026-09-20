@@ -1,0 +1,7 @@
+export default function DashboardSkeleton({ compact = false }: { compact?: boolean }) {
+  return <main aria-label="Chargement du contenu" aria-busy="true" className="min-h-[calc(100vh-4rem)] px-5 py-8 sm:px-8"><div className="mx-auto max-w-5xl animate-pulse">
+    <div className="flex items-center justify-between gap-5"><div className="space-y-3"><div className="h-3 w-28 rounded-full bg-[#e8ded9]"/><div className="h-8 w-56 rounded-lg bg-[#e3d8d3]"/><div className="h-4 w-72 max-w-full rounded-full bg-[#eee6e2]"/></div><div className="h-11 w-36 rounded-xl bg-[#e8ded9]"/></div>
+    <div className={`mt-8 grid gap-5 ${compact ? "sm:grid-cols-2" : "lg:grid-cols-3"}`}>{Array.from({ length: compact ? 2 : 3 }, (_, index) => <div key={index} className="rounded-2xl border border-[#eadfdb] bg-white p-6"><div className="h-10 w-10 rounded-xl bg-[#f0e6e2]"/><div className="mt-5 h-5 w-32 rounded bg-[#e3d8d3]"/><div className="mt-3 h-4 w-full rounded bg-[#f0e8e4]"/><div className="mt-2 h-4 w-2/3 rounded bg-[#f0e8e4]"/></div>)}</div>
+    <div className="mt-5 rounded-2xl border border-[#eadfdb] bg-white p-6"><div className="h-5 w-40 rounded bg-[#e3d8d3]"/><div className="mt-6 space-y-4">{Array.from({ length: 3 }, (_, index) => <div key={index} className="flex items-center gap-4"><div className="h-11 w-11 rounded-xl bg-[#eee4df]"/><div className="flex-1 space-y-2"><div className="h-4 w-1/3 rounded bg-[#e8ded9]"/><div className="h-3 w-2/3 rounded bg-[#f1eae6]"/></div></div>)}</div></div>
+  </div></main>;
+}

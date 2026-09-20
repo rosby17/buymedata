@@ -2,19 +2,22 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import DashboardSkeleton from "@/components/DashboardSkeleton";
 
 type Campaign = { id: string; slug?: string; cover_url?: string; title: string; description?: string; target_amount: number; collected_amount: number; status: string };
 
 export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [loading, setLoading] = useState(true);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
-  const load = async () => { const response = await fetch("/api/campaigns", { cache: "no-store" }); if (response.status === 401) { location.href = "/login"; return; } setCampaigns((await response.json()).campaigns || []); };
+  const load = async () => { const response = await fetch("/api/campaigns", { cache: "no-store" }); if (response.status === 401) { location.href = "/login"; return; } setCampaigns((await response.json()).campaigns || []); setLoading(false); };
   useEffect(() => { const timer = window.setTimeout(() => { load(); }, 0); return () => window.clearTimeout(timer); }, []);
   const campaignUrl = (campaign: Campaign) => `${location.origin}/c/${campaign.slug || campaign.id}`;
   const copy = async (campaign: Campaign) => { await navigator.clipboard?.writeText(campaignUrl(campaign)); setOpenMenu(null); setNotice("Lien de cagnotte copié."); };
   const remove = async (id: string) => { if (!confirm("Supprimer cette cagnotte sans don ?")) return; const response = await fetch(`/api/campaigns/${id}`, { method: "DELETE" }); const body = await response.json(); setNotice(response.ok ? "Cagnotte supprimée." : body.error || "Suppression impossible"); if (response.ok) load(); };
-  return <main className="min-h-[calc(100vh-4rem)] px-5 py-8 sm:px-8"><div className="mx-auto max-w-5xl"><header className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-sm font-bold text-[#b20024]">Votre espace créateur</p><h1 className="mt-2 text-3xl font-bold">Mes cagnottes</h1><p className="mt-1 text-sm text-[#6f5a57]">Créez, partagez et pilotez chaque objectif.</p></div><div className="flex flex-wrap gap-3"><Link href="/explore" className="rounded-xl border border-[#e4bdbc] px-5 py-3 text-sm font-bold text-[#b20024]">Explorer les cagnottes</Link><Link href="/dashboard/create-campaign" className="rounded-xl bg-[#b20024] px-5 py-3 text-sm font-bold text-white">Créer une cagnotte</Link></div></header>{notice && <p className="mt-6 rounded-xl bg-[#fff2f1] px-4 py-3 text-sm font-semibold text-[#8e001d]">{notice}</p>}<div className="mt-7 space-y-4">{campaigns.length === 0 ? <div className="rounded-2xl border border-dashed border-[#dec9c4] bg-white p-10 text-center"><p className="font-bold">Aucune cagnotte créée</p><Link href="/dashboard/create-campaign" className="mt-4 inline-block text-sm font-bold text-[#b20024]">Créer mon premier objectif</Link></div> : campaigns.map(c => <CampaignCard key={c.id} campaign={c} open={openMenu === c.id} onToggle={() => setOpenMenu(openMenu === c.id ? null : c.id)} onCopy={() => copy(c)} onRemove={() => remove(c.id)} url={campaignUrl(c)} />)}</div></div></main>;
+  if (loading) return <DashboardSkeleton compact />;
+  return <main className="min-h-[calc(100vh-4rem)] px-5 py-8 sm:px-8"><div className="mx-auto max-w-5xl"><header className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-sm font-bold text-[#b20024]">Votre espace créateur</p><h1 className="mt-2 text-3xl font-bold">Mes cagnottes</h1><p className="mt-1 text-sm text-[#6f5a57]">Créez, partagez et pilotez chaque objectif.</p></div><div className="flex flex-wrap gap-3"><Link href="/explore" target="_blank" rel="noopener noreferrer" className="rounded-xl border border-[#e4bdbc] px-5 py-3 text-sm font-bold text-[#b20024]">Explorer les cagnottes</Link><Link href="/dashboard/create-campaign" className="rounded-xl bg-[#b20024] px-5 py-3 text-sm font-bold text-white">Créer une cagnotte</Link></div></header>{notice && <p className="mt-6 rounded-xl bg-[#fff2f1] px-4 py-3 text-sm font-semibold text-[#8e001d]">{notice}</p>}<div className="mt-7 space-y-4">{campaigns.length === 0 ? <div className="rounded-2xl border border-dashed border-[#dec9c4] bg-white p-10 text-center"><p className="font-bold">Aucune cagnotte créée</p><Link href="/dashboard/create-campaign" className="mt-4 inline-block text-sm font-bold text-[#b20024]">Créer mon premier objectif</Link></div> : campaigns.map(c => <CampaignCard key={c.id} campaign={c} open={openMenu === c.id} onToggle={() => setOpenMenu(openMenu === c.id ? null : c.id)} onCopy={() => copy(c)} onRemove={() => remove(c.id)} url={campaignUrl(c)} />)}</div></div></main>;
 }
 
 function CampaignCard({ campaign: c, open, onToggle, onCopy, onRemove, url }: { campaign: Campaign; open: boolean; onToggle: () => void; onCopy: () => void; onRemove: () => void; url: string }) {

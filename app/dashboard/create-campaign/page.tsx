@@ -1,5 +1,6 @@
 "use client";
 import { Suspense, useEffect, useState } from "react";
+import DashboardSkeleton from "@/components/DashboardSkeleton";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -376,5 +377,5 @@ function CreateCampaignContent() {
 }
 
 export default function CreateCampaign() {
-  return <Suspense fallback={<main className="min-h-[calc(100vh-4rem)] px-5 py-20 text-center text-[#6f5a57]">Chargement de la cagnotte…</main>}><CreateCampaignContent /></Suspense>;
+  return <Suspense fallback={<DashboardSkeleton compact />}><CreateCampaignContent /></Suspense>;
 }
