@@ -7,6 +7,7 @@ import { signPayload, readPayload, safeEqual, validUsername } from "@/lib/auth-s
 const keys=createRemoteJWKSet(new URL("https://www.googleapis.com/oauth2/v3/certs"));
 export async function GET(request:Request){
  const origin=process.env.NEXT_PUBLIC_SITE_URL||new URL(request.url).origin;
+ const redirectUri=process.env.GOOGLE_REDIRECT_URI||origin+"/api/auth/google";
  const url=new URL(request.url),jar=await cookies();
  const fail=(reason:string)=>Response.redirect(origin+"/login?error="+encodeURIComponent(reason));
  if(!process.env.GOOGLE_CLIENT_ID||!process.env.GOOGLE_CLIENT_SECRET)return fail("La connexion Google n’est pas encore configurée.");
@@ -16,13 +17,13 @@ export async function GET(request:Request){
  if(intent==="signup"&&!validUsername(username))return fail("Choisissez d’abord un username valide.");
  const state=crypto.randomBytes(32).toString("hex"),nonce=crypto.randomBytes(32).toString("hex"),verifier=crypto.randomBytes(32).toString("base64url");
  jar.set("google_oauth_state",signPayload({state,nonce,verifier,intent,username,issued:Date.now()}),{...cookieOptions,maxAge:600});
- const params=new URLSearchParams({client_id:process.env.GOOGLE_CLIENT_ID,redirect_uri:origin+"/api/auth/google",response_type:"code",scope:"openid email profile",state,nonce,prompt:"select_account",code_challenge:crypto.createHash("sha256").update(verifier).digest("base64url"),code_challenge_method:"S256"});
+ const params=new URLSearchParams({client_id:process.env.GOOGLE_CLIENT_ID,redirect_uri:redirectUri,response_type:"code",response_mode:"query",scope:"openid email profile",state,nonce,prompt:"select_account",code_challenge:crypto.createHash("sha256").update(verifier).digest("base64url"),code_challenge_method:"S256"});
  return Response.redirect("https://accounts.google.com/o/oauth2/v2/auth?"+params);
  }
  const saved=readPayload(jar.get("google_oauth_state")?.value);jar.delete("google_oauth_state");
  if(!saved||typeof saved.state!=="string"||!safeEqual(saved.state,url.searchParams.get("state")||"")||typeof saved.issued!=="number"||saved.issued>Date.now()||Date.now()-saved.issued>600000)return fail("La session Google a expiré. Recommencez.");
  if(url.searchParams.has("error"))return fail("Connexion Google annulée.");
- const r=await fetch("https://oauth2.googleapis.com/token",{method:"POST",headers:{"content-type":"application/x-www-form-urlencoded"},body:new URLSearchParams({code:url.searchParams.get("code")!,client_id:process.env.GOOGLE_CLIENT_ID,client_secret:process.env.GOOGLE_CLIENT_SECRET,redirect_uri:origin+"/api/auth/google",grant_type:"authorization_code",code_verifier:String(saved.verifier)}),signal:AbortSignal.timeout(15000)});
+ const r=await fetch("https://oauth2.googleapis.com/token",{method:"POST",headers:{"content-type":"application/x-www-form-urlencoded"},body:new URLSearchParams({code:url.searchParams.get("code")!,client_id:process.env.GOOGLE_CLIENT_ID,client_secret:process.env.GOOGLE_CLIENT_SECRET,redirect_uri:redirectUri,grant_type:"authorization_code",code_verifier:String(saved.verifier)}),signal:AbortSignal.timeout(15000)});
  if(!r.ok)return fail("Google n’a pas pu confirmer cette connexion.");
  const tokens=await r.json();
  const {payload}=await jwtVerify(tokens.id_token,keys,{issuer:["https://accounts.google.com","accounts.google.com"],audience:process.env.GOOGLE_CLIENT_ID});
