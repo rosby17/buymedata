@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 
 interface NavbarProps {
   onSupportClick?: () => void;
+  dashboardLayout?: boolean;
 }
 
 /* ── Buy Me Data mascot logo ── */
@@ -14,7 +15,7 @@ export function TopUpLogo({ className = "w-8 h-8" }: { className?: string }) {
   );
 }
 
-export default function Navbar({ onSupportClick }: NavbarProps) {
+export default function Navbar({ onSupportClick, dashboardLayout = false }: NavbarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [search, setSearch] = useState("");
@@ -42,7 +43,7 @@ export default function Navbar({ onSupportClick }: NavbarProps) {
 
   return (
     <nav
-      className="sticky top-0 z-50 border-b shadow-sm h-16 transition-colors"
+      className={`sticky top-0 z-50 border-b shadow-sm h-16 transition-colors ${dashboardLayout ? "lg:ml-64" : ""}`}
       style={{ backgroundColor: "#fbf9f4", borderColor: "#e4bdbc" }}
     >
       <div
@@ -50,15 +51,10 @@ export default function Navbar({ onSupportClick }: NavbarProps) {
       >
         {/* Logo + Nav Links */}
         <div className="flex items-center gap-8">
-          <Link href="/explore" className="flex items-center gap-2 group">
+          {!dashboardLayout && <Link href="/explore" className="flex items-center gap-2 group">
             <TopUpLogo className="w-8 h-8 transition-transform group-hover:scale-105" />
-            <span
-              className="text-2xl font-extrabold tracking-tight cursor-pointer"
-              style={{ color: "#b20024" }}
-            >
-              <span className="text-[1.05rem] sm:text-[1.2rem] font-bold tracking-tight">Buy Me Data</span>
-            </span>
-          </Link>
+            <span className="text-2xl font-extrabold tracking-tight cursor-pointer" style={{ color: "#b20024" }}><span className="text-[1.05rem] sm:text-[1.2rem] font-bold tracking-tight">Buy Me Data</span></span>
+          </Link>}
 
         </div>
 
