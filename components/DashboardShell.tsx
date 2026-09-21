@@ -16,14 +16,13 @@ export function useDashboardProfile() {
 
 export default function DashboardShell({ children, profile }: { children: React.ReactNode; profile: DashboardProfile }) {
   const pathname = usePathname();
-  const pageHref = profile?.username ? `/${profile.username}` : "/dashboard/settings";
+  const pageHref = profile?.username ? `/${profile.username}` : "/dashboard/support";
   const items = [
     ["/dashboard", "home", "Accueil", pathname === "/dashboard"],
     [pageHref, "open_in_new", "Voir ma page", false],
     ["/dashboard/support", "volunteer_activism", "Me soutenir", pathname.startsWith("/dashboard/support")],
     ["/dashboard/campaigns", "flag", "Cagnottes", pathname.startsWith("/dashboard/campaigns") || pathname.startsWith("/dashboard/create-campaign")],
     ["/dashboard/withdrawals", "payments", "Retraits", pathname.startsWith("/dashboard/withdrawals")],
-    ["/dashboard/settings", "edit_square", "Ma page de soutien", pathname.startsWith("/dashboard/settings")],
     ["/dashboard/account", "settings", "Paramètres du compte", pathname.startsWith("/dashboard/account")],
   ] as const;
   return <DashboardProfileContext.Provider value={profile}><Navbar dashboardLayout initialUser={{ name: profile.full_name, email: profile.email, username: profile.username, avatar_url: profile.avatar_url }} /><div className="min-h-screen bg-[#f5f3ee]">
