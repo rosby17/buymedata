@@ -35,7 +35,7 @@ export default function SupportPageManager() {
 
   useEffect(() => {
     fetch("/api/profile", { cache: "no-store" }).then(async response => {
-      if (response.status === 401) { window.location.replace("/login?next=%2Fdashboard%2Fsupport"); return; }
+      if (response.status === 401) { window.location.replace("/login?next=%2Fapp%2Fsupport"); return; }
       if (!response.ok) throw new Error("Profile unavailable");
       setProfile((await response.json()).profile);
     }).catch(() => setError("Impossible de charger votre page de soutien."));

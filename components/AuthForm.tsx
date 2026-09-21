@@ -12,7 +12,7 @@ export default function AuthForm({register=false,initialError=""}:{register?:boo
  const response=await fetch("/api/auth/session",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({email,password,username,register})});const data=await response.json();
  if(!response.ok)throw new Error(data.error||"Veuillez réessayer.");
  if(data.verification_required){setMessage(data.message||"Consultez votre e-mail pour confirmer votre adresse.");return;}
- location.assign("/dashboard");
+ location.assign("/app");
  }catch(err){setError(err instanceof Error?err.message:"Service indisponible.");}finally{setBusy(false);}}
  return <main className={styles.page}><section className={styles.card}><Link href="/" className={styles.brand}><TopUpLogo/>Buy Me Data</Link><h1>{register?"Créez votre page":"Bon retour"}</h1><p>{register?"De la data pour continuer à créer.":"Connectez-vous à votre espace créateur."}</p>
  {error&&<div role="alert" className={styles.notice}>{error}</div>}{message&&<div role="status" className={styles.notice}>{message}</div>}

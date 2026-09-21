@@ -47,7 +47,7 @@ export default function SignupPage() {
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "Inscription impossible");
       if (payload.verification_required) { setMessage(payload.message || "Confirmez votre adresse e-mail."); return; }
-      router.push("/dashboard");
+      router.push("/app");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Inscription impossible");
     } finally {

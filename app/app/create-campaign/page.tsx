@@ -61,7 +61,7 @@ function CreateCampaignContent() {
       const payload = await response.json().catch(() => ({}));
       if (response.status === 401) { router.push("/login"); return; }
       if (!response.ok) throw new Error(payload.error || "Création impossible");
-      router.push("/dashboard/campaigns");
+      router.push("/app/campaigns");
       router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Création impossible");
@@ -79,7 +79,7 @@ function CreateCampaignContent() {
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/dashboard">
+            <Link href="/app">
               <button
                 className="p-2 rounded-full transition-colors flex items-center justify-center"
                 style={{ backgroundColor: "#f0eee9" }}
