@@ -1,8 +1,11 @@
 import { query, withTransaction } from "@/lib/db";
 import { currentUserId } from "@/lib/auth";
 
-// Double the reference 5% platform fee and 0.5% payout fee: 11% total.
-const WITHDRAWAL_FEE_RATE = 0.11;
+// Frais Buy Me Data retenus sur chaque retrait, avant versement au créateur.
+const WITHDRAWAL_FEE_RATE = 0.12;
+// Politique de retrait : 3 jours en attente, puis mise en paiement, dépôt sous 48 h max (5 jours au total).
+const WITHDRAWAL_PENDING_DAYS = 3;
+const WITHDRAWAL_PAYOUT_HOURS = 48;
 
 export async function GET() {
   const userId = await currentUserId();
@@ -26,7 +29,7 @@ export async function GET() {
       FROM orders WHERE creator_id=$1`, [userId]),
     query("SELECT id, customer_name AS name, message, amount, status, created_at FROM orders WHERE creator_id = $1 ORDER BY created_at DESC LIMIT 20", [userId]),
     query("SELECT id, title, target_amount AS total, collected_amount AS current, status FROM campaigns WHERE creator_id = $1 ORDER BY created_at DESC", [userId]),
-    query("SELECT id, amount, fee_amount, net_amount, method, destination, status, created_at FROM withdrawals WHERE creator_id = $1 ORDER BY created_at DESC LIMIT 10", [userId]),
+    query("SELECT id, amount, fee_amount, net_amount, method, destination, status, process_after, expected_paid_at, created_at FROM withdrawals WHERE creator_id = $1 ORDER BY created_at DESC LIMIT 10", [userId]),
   ]);
   const paidOut = withdrawals.rows.filter((row) => ["pending", "processing", "paid"].includes(row.status)).reduce((sum, row) => sum + Number(row.amount), 0);
   return Response.json({ mode: "creator", stats: { ...totals.rows[0], available: Math.max(0, Number(totals.rows[0].collected) - paidOut) }, activity: activity.rows, campaigns: campaigns.rows, withdrawals: withdrawals.rows });
@@ -53,7 +56,10 @@ export async function POST(request: Request) {
       COALESCE((SELECT SUM(amount) FROM orders WHERE creator_id=$1 AND status='completed'),0) -
       COALESCE((SELECT SUM(amount) FROM withdrawals WHERE creator_id=$1 AND status IN ('pending','processing','paid')),0) AS available`, [userId]);
     if (amount > Number(balance.rows[0].available)) throw new Error("INSUFFICIENT_BALANCE");
-    const result = await client.query("INSERT INTO withdrawals (creator_id, amount, fee_amount, net_amount, method, destination) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *", [userId, grossAmount, feeAmount, netAmount, method, destination]);
+    const result = await client.query(
+      `INSERT INTO withdrawals (creator_id, amount, fee_amount, net_amount, method, destination, process_after, expected_paid_at)
+       VALUES ($1, $2, $3, $4, $5, $6, now() + ($7 || ' days')::interval, now() + ($7 || ' days')::interval + ($8 || ' hours')::interval) RETURNING *`,
+      [userId, grossAmount, feeAmount, netAmount, method, destination, WITHDRAWAL_PENDING_DAYS, WITHDRAWAL_PAYOUT_HOURS]);
     return result.rows[0];
   }).catch((error) => {
     if (String(error).includes("CREATOR_REQUIRED")) return null;
@@ -62,5 +68,9 @@ export async function POST(request: Request) {
   });
   if (withdrawal === null) return Response.json({ error: "Seuls les créateurs peuvent demander un retrait" }, { status: 403 });
   if (withdrawal === false) return Response.json({ error: "Solde disponible insuffisant" }, { status: 400 });
-  return Response.json({ withdrawal, fees: { rate: WITHDRAWAL_FEE_RATE, amount: feeAmount, net: netAmount } }, { status: 201 });
+  return Response.json({
+    withdrawal,
+    fees: { rate: WITHDRAWAL_FEE_RATE, amount: feeAmount, net: netAmount },
+    schedule: { pendingDays: WITHDRAWAL_PENDING_DAYS, payoutHours: WITHDRAWAL_PAYOUT_HOURS, processAfter: withdrawal.process_after, expectedPaidAt: withdrawal.expected_paid_at },
+  }, { status: 201 });
 }

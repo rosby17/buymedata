@@ -17,7 +17,7 @@ export async function GET() {
       GROUP BY p.id ORDER BY p.created_at DESC LIMIT 100`),
     query(`SELECT o.id, o.customer_name, o.amount, o.currency, o.status, o.created_at, p.full_name AS creator_name
       FROM orders o JOIN profiles p ON p.id=o.creator_id ORDER BY o.created_at DESC LIMIT 100`),
-    query(`SELECT w.id, w.amount, w.currency, w.method, w.destination, w.status, w.created_at,
+    query(`SELECT w.id, w.amount, w.currency, w.method, w.destination, w.status, w.process_after, w.expected_paid_at, w.created_at,
       p.full_name AS creator_name FROM withdrawals w JOIN profiles p ON p.id=w.creator_id
       ORDER BY w.created_at DESC LIMIT 100`),
   ]);
