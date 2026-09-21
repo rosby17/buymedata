@@ -113,7 +113,7 @@ export default function Navbar({ onSupportClick, dashboardLayout = false, initia
                   style={{ borderColor: "#e4bdbc" }}
                 >
                   <Link
-                    href={user.username ? `/${user.username}` : "/dashboard/settings"}
+                    href={user.username ? `/${user.username}` : "/dashboard/support"}
                     onClick={() => setShowDropdown(false)}
                     className="block px-4 py-2.5 hover:bg-gray-50 text-[#1b1c19] font-medium"
                   >

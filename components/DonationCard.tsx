@@ -14,11 +14,16 @@ export type DonationCreator = {
  * créateur, elles sont appliquées en style inline : Tailwind ne peut pas
  * générer des classes à partir de valeurs dynamiques.
  */
-export default function DonationCard({ creator, design, preview = false }: {
+export type EditableField = keyof DonationDesign | "avatar" | "bio";
+
+export default function DonationCard({ creator, design, preview = false, renderEdit }: {
   creator: DonationCreator;
   design: DonationDesign;
   preview?: boolean;
+  /** Fourni par l'éditeur du dashboard : insère un crayon à côté de l'élément. */
+  renderEdit?: (field: EditableField) => React.ReactNode;
 }) {
+  const edit = (field: EditableField) => renderEdit?.(field) ?? null;
   const theme = themeById(design.page_theme);
   const banner = safeBannerUrl(design.banner_url);
   const centered = theme.layout === "centered";
@@ -41,11 +46,15 @@ export default function DonationCard({ creator, design, preview = false }: {
     >
       <div
         style={{
+          position: "relative",
           height: theme.bannerHeight,
           background: banner ? `center / cover no-repeat url("${banner}")` : theme.banner,
         }}
-      />
+      >
+        {edit("banner_url")}
+      </div>
       <div style={{ padding: preview ? "0 1.5rem 1.75rem" : "0 1.75rem 2.5rem", textAlign: align }}>
+        <span style={{ position: "relative", display: "block" }}>
         <img
           src={creator.avatar_url || "/buy-me-data-mascot.png"}
           alt={displayName}
@@ -63,6 +72,8 @@ export default function DonationCard({ creator, design, preview = false }: {
             background: theme.quote,
           }}
         />
+        {edit("avatar")}
+        </span>
         <p
           style={{
             marginTop: "1.25rem",
@@ -74,6 +85,7 @@ export default function DonationCard({ creator, design, preview = false }: {
           }}
         >
           {design.page_eyebrow}
+          {edit("page_eyebrow")}
         </p>
         <h1
           style={{
@@ -87,6 +99,7 @@ export default function DonationCard({ creator, design, preview = false }: {
           }}
         >
           {design.page_headline}
+          {edit("page_headline")}
         </h1>
         <p
           style={{
@@ -100,6 +113,7 @@ export default function DonationCard({ creator, design, preview = false }: {
           }}
         >
           {design.page_tagline}
+          {edit("page_tagline")}
         </p>
         {distinctBio && (
           <p
@@ -115,9 +129,13 @@ export default function DonationCard({ creator, design, preview = false }: {
             }}
           >
             {distinctBio}
+            {edit("bio")}
           </p>
         )}
-        <CallToAction creator={creator} design={design} theme={theme} centered={centered} preview={preview} />
+        <span style={{ position: "relative", display: "inline-block", width: centered ? "100%" : undefined }}>
+          <CallToAction creator={creator} design={design} theme={theme} centered={centered} preview={preview} />
+          {edit("page_cta")}
+        </span>
         <p
           style={{
             marginTop: "1rem",
@@ -131,6 +149,7 @@ export default function DonationCard({ creator, design, preview = false }: {
         >
           <span className="material-symbols-outlined" style={{ fontSize: "15px" }}>verified_user</span>
           {design.page_note}
+          {edit("page_note")}
         </p>
       </div>
     </article>
