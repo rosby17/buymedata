@@ -115,6 +115,15 @@ ALTER TABLE profiles ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN NOT N
 ALTER TABLE withdrawals ADD COLUMN IF NOT EXISTS fee_amount BIGINT NOT NULL DEFAULT 0;
 ALTER TABLE withdrawals ADD COLUMN IF NOT EXISTS net_amount BIGINT NOT NULL DEFAULT 0;
 UPDATE withdrawals SET net_amount = amount WHERE net_amount = 0 AND amount > 0;
+-- Personnalisation de la page de dons (thème, bannière, textes).
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS page_theme TEXT NOT NULL DEFAULT 'atelier';
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS banner_url TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS page_eyebrow TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS page_headline TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS page_tagline TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS page_cta TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS page_note TEXT;
+
 ALTER TABLE withdrawals ADD COLUMN IF NOT EXISTS process_after TIMESTAMPTZ NOT NULL DEFAULT now() + interval '3 days';
 ALTER TABLE withdrawals ADD COLUMN IF NOT EXISTS expected_paid_at TIMESTAMPTZ NOT NULL DEFAULT now() + interval '5 days';
 UPDATE withdrawals SET process_after = created_at + interval '3 days', expected_paid_at = created_at + interval '5 days'

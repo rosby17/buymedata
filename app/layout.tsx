@@ -1,11 +1,19 @@
 import type { Metadata } from "next";
-import { Work_Sans } from "next/font/google";
+import { Work_Sans, Fraunces } from "next/font/google";
 import "./globals.css";
 
 const workSans = Work_Sans({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800"],
   variable: "--font-work-sans",
+  display: "swap",
+});
+
+// Serif d'affichage utilisée par les thèmes de page de dons.
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-display",
   display: "swap",
 });
 
@@ -22,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={workSans.variable}>
+    <html lang="fr" className={`${workSans.variable} ${fraunces.variable}`}>
       <head>
         <link
           rel="stylesheet"
