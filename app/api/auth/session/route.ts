@@ -7,7 +7,7 @@ import { query } from "@/lib/db";
 
 export async function GET() {
   const userId = await currentUserId();
-  if (!userId) return Response.json({ user:null }, {status:401});
+  if (!userId) return Response.json({ user:null }, {status:401,headers:{"Cache-Control":"no-store"}});
   const result = await query("SELECT id,email,full_name AS name,role,avatar_url,username FROM profiles WHERE id=$1", [userId]);
   (await cookies()).set(sessionCookie,createSession(userId),cookieOptions);
   return Response.json({user:result.rows[0]}, {headers:{"Cache-Control":"no-store"}});

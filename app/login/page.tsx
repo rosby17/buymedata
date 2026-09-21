@@ -29,7 +29,6 @@ export default function LoginPage() {
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.error || "Connexion impossible");
       if (payload.verification_required) { setMessage(payload.message || "Consultez votre e-mail pour confirmer votre adresse."); return; }
-      sessionStorage.setItem("isLoggedIn", "true");
       const next = new URLSearchParams(window.location.search).get("next");
       window.location.assign(next?.startsWith("/dashboard") ? next : "/dashboard");
     } catch (err) {
