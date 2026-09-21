@@ -2,6 +2,14 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Le dashboard a déménagé de /dashboard vers /app : on garde les anciens
+  // liens et signets fonctionnels.
+  async redirects() {
+    return [
+      { source: "/dashboard", destination: "/app", permanent: true },
+      { source: "/dashboard/:path*", destination: "/app/:path*", permanent: true },
+    ];
+  },
   async headers() {
     return [{
       source: "/(.*)",

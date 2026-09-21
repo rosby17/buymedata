@@ -40,7 +40,7 @@ export function verifyPassword(password: string, encoded: string) {
   return safeEqual(crypto.scryptSync(password, salt, 64).toString("hex"), stored);
 }
 export function validUsername(value: string) {
-  const reserved = ["about","privacy","terms","contact","api","dashboard","login","signup","explore","pay","merci","admin","verify-email","forgot-password","reset-password"];
+  const reserved = ["about","privacy","terms","contact","api","app","dashboard","login","signup","explore","pay","merci","admin","verify-email","forgot-password","reset-password"];
   return /^[a-z0-9_-]{3,30}$/.test(value) && !reserved.includes(value);
 }
 export function validEmail(value: string) { return value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value); }

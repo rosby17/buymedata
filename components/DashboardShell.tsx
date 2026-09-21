@@ -16,14 +16,14 @@ export function useDashboardProfile() {
 
 export default function DashboardShell({ children, profile }: { children: React.ReactNode; profile: DashboardProfile }) {
   const pathname = usePathname();
-  const pageHref = profile?.username ? `/${profile.username}` : "/dashboard/support";
+  const pageHref = profile?.username ? `/${profile.username}` : "/app/support";
   const items = [
-    ["/dashboard", "home", "Accueil", pathname === "/dashboard"],
+    ["/app", "home", "Accueil", pathname === "/app"],
     [pageHref, "open_in_new", "Voir ma page", false],
-    ["/dashboard/support", "volunteer_activism", "Me soutenir", pathname.startsWith("/dashboard/support")],
-    ["/dashboard/campaigns", "flag", "Cagnottes", pathname.startsWith("/dashboard/campaigns") || pathname.startsWith("/dashboard/create-campaign")],
-    ["/dashboard/withdrawals", "payments", "Retraits", pathname.startsWith("/dashboard/withdrawals")],
-    ["/dashboard/account", "settings", "Paramètres du compte", pathname.startsWith("/dashboard/account")],
+    ["/app/support", "volunteer_activism", "Me soutenir", pathname.startsWith("/app/support")],
+    ["/app/campaigns", "flag", "Cagnottes", pathname.startsWith("/app/campaigns") || pathname.startsWith("/app/create-campaign")],
+    ["/app/withdrawals", "payments", "Retraits", pathname.startsWith("/app/withdrawals")],
+    ["/app/account", "settings", "Paramètres du compte", pathname.startsWith("/app/account")],
   ] as const;
   return <DashboardProfileContext.Provider value={profile}><Navbar dashboardLayout initialUser={{ name: profile.full_name, email: profile.email, username: profile.username, avatar_url: profile.avatar_url }} /><div className="min-h-screen bg-[#f5f3ee]">
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-[#ead6d2] bg-white lg:block"><div className="flex h-full flex-col"><div className="flex h-16 items-center px-5"><Link href="/" className="flex items-center gap-2"><img src="/buy-me-data-mascot.png" alt="Buy Me Data" className="h-9 w-9 object-contain" /><span className="text-sm font-bold text-[#b20024]">Buy Me Data</span></Link></div><div className="flex-1 p-4">

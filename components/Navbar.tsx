@@ -113,14 +113,14 @@ export default function Navbar({ onSupportClick, dashboardLayout = false, initia
                   style={{ borderColor: "#e4bdbc" }}
                 >
                   <Link
-                    href={user.username ? `/${user.username}` : "/dashboard/support"}
+                    href={user.username ? `/${user.username}` : "/app/support"}
                     onClick={() => setShowDropdown(false)}
                     className="block px-4 py-2.5 hover:bg-gray-50 text-[#1b1c19] font-medium"
                   >
                     Voir ma page
                   </Link>
                   <Link
-                    href="/dashboard"
+                    href="/app"
                     onClick={() => setShowDropdown(false)}
                     className="block px-4 py-2.5 hover:bg-gray-50 text-[#1b1c19] font-medium border-b"
                     style={{ borderColor: "#f5f3ee" }}
@@ -128,7 +128,7 @@ export default function Navbar({ onSupportClick, dashboardLayout = false, initia
                     Dashboard
                   </Link>
                   <Link
-                    href="/dashboard/account"
+                    href="/app/account"
                     onClick={() => setShowDropdown(false)}
                     className="block px-4 py-2.5 hover:bg-gray-50 text-[#1b1c19] font-medium"
                   >

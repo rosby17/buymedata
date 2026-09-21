@@ -30,7 +30,7 @@ export default function LoginPage() {
       if (!response.ok) throw new Error(payload.error || "Connexion impossible");
       if (payload.verification_required) { setMessage(payload.message || "Consultez votre e-mail pour confirmer votre adresse."); return; }
       const next = new URLSearchParams(window.location.search).get("next");
-      window.location.assign(next?.startsWith("/dashboard") ? next : "/dashboard");
+      window.location.assign(next?.startsWith("/app") ? next : "/app");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Connexion impossible");
     } finally {
