@@ -3,13 +3,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import DashboardSkeleton from "@/components/DashboardSkeleton";
 import DonationCard, { type EditableField, type UploadField } from "@/components/DonationCard";
-import { donationThemes, resolveDonationDesign, themeById, type DonationDesign } from "@/lib/donation-page";
+import { defaultThemeId, donationThemes, resolveDonationDesign, themeById, type DonationDesign } from "@/lib/donation-page";
+
+/** Champs pilotés par cet écran, envoyés ensemble à l'enregistrement. */
+const EDITABLE = ["page_theme", "banner_url", "page_eyebrow", "page_headline", "page_tagline", "page_cta", "page_note", "bio", "username"] as const;
 
 type Profile = {
   id?: string; full_name?: string; username?: string; category?: string; avatar_url?: string; bio?: string;
 } & Partial<DonationDesign>;
 
 export default function SupportPageManager() {
+  const [saved, setSaved] = useState<Profile | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [error, setError] = useState("");
   const [active, setActive] = useState<EditableField | null>(null);
@@ -25,25 +29,38 @@ export default function SupportPageManager() {
     fetch("/api/profile", { cache: "no-store" }).then(async response => {
       if (response.status === 401) { window.location.replace("/login?next=%2Fapp%2Fsupport"); return; }
       if (!response.ok) throw new Error("Profile unavailable");
-      setProfile((await response.json()).profile);
+      const loaded = (await response.json()).profile;
+      setSaved(loaded);
+      setProfile(loaded);
     }).catch(() => setError("Impossible de charger votre page de soutien."));
   }, []);
 
-  // Enregistrement automatique : ni bouton, ni page intermédiaire.
-  const persist = useCallback((patch: Partial<Profile>) => {
-    window.clearTimeout(pending.current);
+  const dirty = Boolean(saved && profile) && EDITABLE.some(key => (profile?.[key] ?? "") !== (saved?.[key] ?? ""));
+
+  // Rien n'est écrit tant que le créateur n'a pas confirmé : quitter la page
+  // sans enregistrer abandonne les modifications.
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+
+  const save = useCallback(async () => {
+    if (!profile) return;
     setStatus("saving");
-    pending.current = window.setTimeout(async () => {
-      const response = await fetch("/api/profile", {
-        method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(patch),
-      }).catch(() => null);
-      const data = await response?.json().catch(() => ({}));
-      if (!response?.ok) { setStatus("error"); setMessage(data?.error || "Enregistrement impossible."); return; }
-      setStatus("saved");
-      setMessage("");
-      window.setTimeout(() => setStatus(current => (current === "saved" ? "idle" : current)), 2000);
-    }, 700);
-  }, []);
+    const patch = Object.fromEntries(EDITABLE.map(key => [key, profile[key] ?? ""]));
+    const response = await fetch("/api/profile", {
+      method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(patch),
+    }).catch(() => null);
+    const data = await response?.json().catch(() => ({}));
+    if (!response?.ok) { setStatus("error"); setMessage(data?.error || "Enregistrement impossible."); return; }
+    setSaved(data.profile);
+    setProfile(data.profile);
+    setStatus("saved");
+    setMessage("");
+    window.setTimeout(() => setStatus(current => (current === "saved" ? "idle" : current)), 2500);
+  }, [profile]);
 
   if (error) return <main className="mx-auto max-w-5xl px-5 py-20 text-center"><p className="font-semibold text-[#1b1c19]">{error}</p></main>;
   if (!profile) return <DashboardSkeleton compact />;
@@ -52,10 +69,14 @@ export default function SupportPageManager() {
   const theme = themeById(design.page_theme);
   const supportUrl = profile.username ? `buymedata.tools-cl.com/${profile.username}/donate` : "";
 
-  const change = (key: keyof Profile, value: string) => {
-    setProfile(current => ({ ...current, [key]: value }));
-    persist({ [key]: value });
-  };
+  const change = (key: keyof Profile, value: string) => setProfile(current => ({ ...current, [key]: value }));
+
+  // Efface la personnalisation : les champs vides reprennent les textes d'origine.
+  const resetToDefaults = () => setProfile(current => ({
+    ...current,
+    page_theme: defaultThemeId, banner_url: "",
+    page_eyebrow: "", page_headline: "", page_tagline: "", page_cta: "", page_note: "",
+  }));
 
   const pickImage = (field: UploadField) => { target.current = field; picker.current?.click(); };
 
@@ -80,11 +101,20 @@ export default function SupportPageManager() {
           <h1 className="mt-2 text-3xl font-bold">Me soutenir</h1>
           <p className="mt-2 text-sm text-[#6f5a57]">Cliquez sur un texte pour le modifier directement. Tout est enregistré automatiquement.</p>
         </div>
-        <p className="text-sm font-semibold text-[#6f5a57]" aria-live="polite">
-          {status === "saving" && "Enregistrement…"}
-          {status === "saved" && "✓ Enregistré"}
-          {status === "error" && <span className="text-[#8e001d]">{message}</span>}
-        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="text-sm font-semibold" aria-live="polite">
+            {status === "saving" && <span className="text-[#6f5a57]">Enregistrement…</span>}
+            {status === "saved" && <span className="text-[#2f6b3a]">✓ Enregistré</span>}
+            {status === "error" && <span className="text-[#8e001d]">{message}</span>}
+            {status === "idle" && dirty && <span className="text-[#8e001d]">Modifications non enregistrées</span>}
+          </p>
+          <button type="button" onClick={resetToDefaults} className="rounded-xl border border-[#ead6d2] px-4 py-2.5 text-sm font-semibold text-[#5b403f] hover:bg-[#fbf9f4]">
+            Réinitialiser
+          </button>
+          <button type="button" onClick={save} disabled={!dirty || status === "saving"} className="rounded-xl bg-[#b20024] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-40">
+            {status === "saving" ? "Enregistrement…" : "Enregistrer"}
+          </button>
+        </div>
       </div>
 
       <div className="mt-7 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
@@ -107,7 +137,7 @@ export default function SupportPageManager() {
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#a18d88]">Lien à partager</p>
           {editingLink ? (
             <div className="mt-3">
-              <div className="flex items-center gap-1 rounded-xl border-2 border-dashed border-[#b20024] px-3 py-2">
+              <div className="flex items-center gap-1 rounded-xl border border-[#b20024] ring-4 ring-[#b20024]/15 px-3 py-2">
                 <span className="shrink-0 text-xs text-[#7b6864]">buymedata.tools-cl.com/</span>
                 <input
                   autoFocus
@@ -180,6 +210,22 @@ export default function SupportPageManager() {
           })}
         </div>
       </section>
+
+      {dirty && (
+        <div className="sticky bottom-4 z-20 mt-8 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#b20024] bg-white px-5 py-4 shadow-[0_12px_30px_rgba(91,64,63,0.18)]">
+          <p className="text-sm font-semibold text-[#1b1c19]">
+            Vos modifications ne sont pas encore enregistrées. Si vous quittez la page, elles seront perdues.
+          </p>
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={() => setProfile(saved)} className="text-sm font-semibold text-[#5b403f] underline underline-offset-4">
+              Annuler
+            </button>
+            <button type="button" onClick={save} disabled={status === "saving"} className="rounded-xl bg-[#b20024] px-5 py-3 text-sm font-bold text-white disabled:opacity-40">
+              {status === "saving" ? "Enregistrement…" : "Enregistrer les modifications"}
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
