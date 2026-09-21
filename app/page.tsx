@@ -31,10 +31,10 @@ export default function HomePage() {
       <section className={styles.pricing} id="tarifs">
         <p className={styles.eyebrow}>DES TARIFS SIMPLES</p>
         <h2>Votre soutien revient<br/><em>aux créateurs.</em></h2>
-        <p className={styles.intro}>Jusqu’à 90 % des revenus sont reversés directement aux créateurs. Les 10 % restants servent uniquement à faire fonctionner le service et à assurer les retraits.</p>
+        <p className={styles.intro}>88 % des revenus sont reversés directement aux créateurs. Les 12 % restants servent uniquement à faire fonctionner le service et à assurer les retraits.</p>
         <div className={styles.pricingCard}>
-          <div><strong>90 %</strong><span>reversés au créateur</span></div>
-          <div><strong>10 %</strong><span>service et retraits sécurisés</span></div>
+          <div><strong>88 %</strong><span>reversés au créateur</span></div>
+          <div><strong>12 %</strong><span>service et retraits sécurisés</span></div>
         </div>
       </section>
       <section className={styles.closing}><p className={styles.eyebrow}>BUY ME DATA, TOUT SIMPLEMENT</p><h2>« Offre-moi de la data.<br/>Je m’occupe de <em>créer.</em> »</h2><p className={styles.intro}>Vos abonnés aiment votre contenu. Donnez-leur un moyen de vous aider à continuer à le partager.</p><Link href="/signup" className={styles.cta}>Créer ma page ↗</Link></section>
