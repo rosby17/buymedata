@@ -199,10 +199,11 @@ function Editable({ as = "p", field, value, placeholder, edit, theme, style, mul
         display: "block",
         color: style.color || theme.text,
         background: style.background || "transparent",
-        border: `2px dashed ${theme.accent}`,
-        borderRadius: "0.5rem",
-        padding: style.padding || "0.3rem 0.5rem",
+        border: `1px solid ${theme.accent}`,
+        borderRadius: "0.6rem",
+        padding: style.padding || "0.3rem 0.55rem",
         outline: "none",
+        boxShadow: `0 0 0 3px ${theme.accent}22`,
         resize: "none" as const,
       },
     };
@@ -313,7 +314,7 @@ function CallToAction({ creator, design, theme, centered, preview, edit }: {
         onChange={event => edit.set("page_cta", event.target.value)}
         onBlur={edit.stop}
         onKeyDown={event => { if (event.key === "Enter" || event.key === "Escape") { event.preventDefault(); edit.stop(); } }}
-        style={{ ...style, textAlign: "center", outline: "none", border: `2px dashed ${theme.accentText}` }}
+        style={{ ...style, textAlign: "center", outline: "none", border: `1px solid ${theme.accentText}`, boxShadow: `0 0 0 3px ${theme.accent}33` }}
       />
     );
   }
