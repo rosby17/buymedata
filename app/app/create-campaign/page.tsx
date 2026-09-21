@@ -79,7 +79,7 @@ function CreateCampaignContent() {
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/app">
+            <Link href="/app/dashboard">
               <button
                 className="p-2 rounded-full transition-colors flex items-center justify-center"
                 style={{ backgroundColor: "#f0eee9" }}

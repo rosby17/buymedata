@@ -26,7 +26,7 @@ export default function DashboardPage() {
 
   const load=async()=>{
     const d=await fetch("/api/dashboard",{cache:"no-store"});
-    if(d.status===401){window.location.replace("/login?next=%2Fapp");return;}
+    if(d.status===401){window.location.replace("/login?next=%2Fapp%2Fdashboard");return;}
     if(!d.ok) throw new Error("Dashboard unavailable");
     const dd=await d.json();
     setCampaigns(dd.campaigns||[]); setActivity(dd.activity||[]);

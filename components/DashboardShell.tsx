@@ -18,7 +18,7 @@ export default function DashboardShell({ children, profile }: { children: React.
   const pathname = usePathname();
   const pageHref = profile?.username ? `/${profile.username}` : "/app/support";
   const items = [
-    ["/app", "home", "Accueil", pathname === "/app"],
+    ["/app/dashboard", "home", "Accueil", pathname === "/app/dashboard"],
     [pageHref, "open_in_new", "Voir ma page", false],
     ["/app/support", "volunteer_activism", "Me soutenir", pathname.startsWith("/app/support")],
     ["/app/campaigns", "flag", "Cagnottes", pathname.startsWith("/app/campaigns") || pathname.startsWith("/app/create-campaign")],
