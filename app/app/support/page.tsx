@@ -99,7 +99,7 @@ export default function SupportPageManager() {
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#a18d88]">Monétiser</p>
           <h1 className="mt-2 text-3xl font-bold">Me soutenir</h1>
-          <p className="mt-2 text-sm text-[#6f5a57]">Cliquez sur un texte pour le modifier directement. Tout est enregistré automatiquement.</p>
+          <p className="mt-2 text-sm text-[#6f5a57]">Cliquez sur un texte pour le modifier directement.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <p className="text-sm font-semibold" aria-live="polite">
