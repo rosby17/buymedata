@@ -56,7 +56,7 @@ export async function GET(request:Request){
  }
  throw new Error("Aucun compte Google associé. Créez d’abord votre page.");
  });
- const response=NextResponse.redirect(origin+"/app");
+ const response=NextResponse.redirect(origin+"/app/dashboard");
  response.cookies.set(sessionCookie,createSession(userId),cookieOptions);
  response.cookies.delete("google_oauth_state");
  return response;

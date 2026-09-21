@@ -120,7 +120,7 @@ export default function Navbar({ onSupportClick, dashboardLayout = false, initia
                     Voir ma page
                   </Link>
                   <Link
-                    href="/app"
+                    href="/app/dashboard"
                     onClick={() => setShowDropdown(false)}
                     className="block px-4 py-2.5 hover:bg-gray-50 text-[#1b1c19] font-medium border-b"
                     style={{ borderColor: "#f5f3ee" }}
