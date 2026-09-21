@@ -283,10 +283,12 @@ export function resolveDonationDesign(displayName: string, stored?: Partial<Dona
   return resolved;
 }
 
-/** N'accepte que des URL d'image distantes ou locales, jamais de javascript:. */
+/** N'accepte que des images : URL distante, chemin local ou envoi direct. */
 export function safeBannerUrl(value: string) {
   if (!value) return "";
   if (value.startsWith("/")) return value;
+  // Bannière envoyée depuis l'éditeur, encodée comme l'avatar.
+  if (/^data:image\/(png|jpeg|jpg|webp|gif);base64,[a-z0-9+/=]+$/i.test(value)) return value;
   try {
     const url = new URL(value);
     return url.protocol === "https:" || url.protocol === "http:" ? url.toString() : "";
