@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import crypto from "node:crypto";
-import { createCheckout, WarapPayError } from "@/lib/warappay";
+import { createCheckout, donorMessage, getProduct, WarapPayError } from "@/lib/warappay";
 import { createTaraCheckout, TaraMoneyError } from "@/lib/taramoney";
 import { query, withTransaction } from "@/lib/db";
 import { currentUserId } from "@/lib/auth";
@@ -32,6 +32,18 @@ export async function POST(request: NextRequest) {
       const campaign = await query("SELECT id FROM campaigns WHERE id = $1 AND creator_id = $2 AND status = 'active'", [campaignId, creatorId]);
       if (!campaign.rows[0]) return Response.json({ error: "Cagnotte introuvable ou inactive" }, { status: 404 });
     }
+    // Le minimum du produit prime sur le nôtre : le refus viendrait sinon de
+    // WarapPay, après avoir déjà créé une commande.
+    if (paymentMethod === "mobile_money" && productCode) {
+      const product = await getProduct(productCode).catch(() => null);
+      if (product && !product.available) return Response.json({ error: "Les paiements Mobile Money sont momentanément indisponibles." }, { status: 503 });
+      const minimum = product?.pricing_type === "variable" ? product.min_amount : null;
+      if (minimum && amount < minimum) {
+        // XAF comme XOF s'affichent « FCFA » pour le donateur.
+        const unit = product?.currency && !["XAF", "XOF"].includes(product.currency) ? product.currency : "FCFA";
+        return Response.json({ error: `Le montant minimum est de ${minimum.toLocaleString("fr-FR")} ${unit}.` }, { status: 400 });
+      }
+    }
     const supporterId = await currentUserId();
     await withTransaction(async (client) => {
       await client.query(`INSERT INTO orders (id, creator_id, campaign_id, supporter_id, email, customer_name, customer_phone, amount, message, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending')`, [orderId, creatorId, campaignId, supporterId, customerEmail, customerName, body.customer_phone ? String(body.customer_phone) : null, amount, body.message ? String(body.message).trim().slice(0, 500) : null]);
@@ -42,6 +54,8 @@ export async function POST(request: NextRequest) {
       customer_name: customerName,
       customer_phone: body.customer_phone ? String(body.customer_phone) : undefined,
       redirect_url: `${origin}/merci?order_id=${orderId}`,
+      // Produit à prix libre : sans montant, WarapPay refuse en AMOUNT_REQUIRED.
+      amount,
       meta: { order_id: orderId, creator_id: creatorId, amount: String(amount) },
     }) : await createTaraCheckout({ orderId, amount, origin, customerName, provider: paymentMethod });
     await queryPayment(orderId, result, paymentMethod === "mobile_money" ? "warappay" : "taramoney");
@@ -50,7 +64,8 @@ export async function POST(request: NextRequest) {
     if (orderId && (error instanceof WarapPayError || error instanceof TaraMoneyError) && error.status >= 400 && error.status < 500) {
       await query("UPDATE orders SET status='failed', updated_at=now() WHERE id=$1 AND status='pending'",[orderId]);
     }
-    if (error instanceof WarapPayError || error instanceof TaraMoneyError) return Response.json({ error: error.message }, { status: error.status });
+    if (error instanceof WarapPayError) return Response.json({ error: donorMessage(error) }, { status: error.status });
+    if (error instanceof TaraMoneyError) return Response.json({ error: error.message }, { status: error.status });
     return Response.json({ error: "Unable to create checkout" }, { status: 500 });
   }
 }
