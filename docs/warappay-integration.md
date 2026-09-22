@@ -41,37 +41,27 @@ La réponse distingue deux montants :
 - `amount` — ce que le client paie, frais de service et majoration de zone compris ;
 - `base_amount` — ce dont la boutique est créditée.
 
-> **Notre code ne lit ni l'un ni l'autre** : `CheckoutResponse` ne déclare que
-> `id`, `status`, `checkout_url`, `download_url` et `meta`. Le montant enregistré
-> dans `payments` est celui de notre propre commande, pas celui confirmé par
-> WarapPay. Tant que les deux coïncident, c'est sans conséquence ; s'ils
-> divergent, nous ne le verrons pas.
+`CheckoutResponse` déclare les deux, mais le montant enregistré dans `payments`
+reste celui de notre propre commande — c'est-à-dire `base_amount`, ce qui revient
+au créateur. Les frais payés en plus par le donateur ne sont pas conservés.
 
-### Divergence à traiter : le champ `amount`
+### Le champ `amount`
 
-Le montant du don est choisi par le soutien, mais **nous ne transmettons jamais
-`amount`** à WarapPay. Or la documentation impose :
+Le produit désigné par `WARAPPAY_PRODUCT_CODE` est à **prix libre**
+(`pricing_type: "variable"`), donc `amount` est **obligatoire** : sans lui,
+WarapPay refuse l'appel en `422 AMOUNT_REQUIRED`.
 
-- produit à **prix libre** (`pricing_type: "variable"`) : `amount` est
-  **obligatoire**, sinon l'appel est refusé en `422 AMOUNT_REQUIRED` ;
-- produit à **prix fixe** (`pricing_type: "fixed"`) : `amount` est facultatif,
-  mais s'il est transmis il doit correspondre au prix actuel, sinon
-  `422 PRICE_MISMATCH`.
+Nous transmettons désormais le montant choisi par le soutien, et nous lisons la
+fiche produit (`GET /v1/products/{code}`, en cache cinq minutes) avant de créer
+la commande, pour deux raisons :
 
-Autrement dit, selon la configuration du produit désigné par
-`WARAPPAY_PRODUCT_CODE`, soit **tous les paiements Mobile Money échouent** en
-`AMOUNT_REQUIRED`, soit **le donateur est débité du prix fixe du produit** et non
-du montant qu'il a choisi, pendant que notre base enregistre son montant.
+- refuser localement un montant inférieur à `min_amount`, avec un message chiffré
+  dans la devise de la boutique, plutôt que de laisser WarapPay refuser après
+  qu'une commande a déjà été créée ;
+- détecter un produit désactivé (`available: false`) avant d'engager le donateur.
 
-Vérifier la configuration réelle du produit avant de conclure :
-
-```bash
-curl -s https://api.warappay.com/api/v1/products/$WARAPPAY_PRODUCT_CODE \
-  -H "Authorization: Bearer $WARAPPAY_API_KEY"
-```
-
-Le correctif attendu : produit à prix libre, et `amount` transmis à chaque
-création de paiement, au moins égal à `min_amount`.
+Le minimum affiché au donateur est donc celui du produit, qui prime sur notre
+propre plancher de 100 FCFA.
 
 ## Statuts
 
@@ -110,12 +100,12 @@ Format commun : `{ "error": { "code", "message" } }`, avec un champ `fields`
 supplémentaire pour les `422 VALIDATION_ERROR`.
 
 `lib/warappay.ts` transporte `status`, `message` et `code` dans une
-`WarapPayError`. La route de paiement renvoie le message au client et bascule la
-commande en `failed` pour toute erreur 4xx — mais **ne distingue aucun code** :
-`AMOUNT_TOO_LOW`, `PRODUCT_UNAVAILABLE` ou `PAYMENTS_FROZEN` produisent le même
-message brut côté donateur, en anglais tel que renvoyé par l'API.
+`WarapPayError`, et `donorMessage()` traduit le code en une phrase destinée au
+donateur : montant trop bas, plafond dépassé, pays suspendu, indisponibilité
+temporaire. Le message brut de l'API, en anglais, n'est plus affiché. La commande
+bascule en `failed` pour toute erreur 4xx.
 
-Codes utiles à traiter spécifiquement : `401 INVALID_API_KEY`,
+Codes traités : `401 INVALID_API_KEY`,
 `403 ACCESS_REVOKED` / `SHOP_INACTIVE` / `PAYMENTS_FROZEN` / `COUNTRY_BLOCKED`,
 `404 INVALID_PRODUCT` / `PRODUCT_UNAVAILABLE`, `422 AMOUNT_REQUIRED` /
 `AMOUNT_TOO_LOW` / `AMOUNT_TOO_HIGH` / `PRICE_MISMATCH` / `CURRENCY_MISMATCH` /
@@ -137,6 +127,6 @@ simultanés se solderait par des échecs secs, sans attente ni reprise.
 | Webhook : signature vérifiée avant traitement | ✅ |
 | Webhook : traitement idempotent | ✅ via `webhook_events` |
 | Webhook : réponse rapide | ⚠️ la réponse attend la transaction en base |
-| Codes 401 / 403 / 404 / 422 gérés distinctement | ❌ message générique, aucun code distingué |
-| `amount` transmis pour un produit à prix libre | ❌ voir la divergence ci-dessus |
+| Codes 401 / 403 / 404 / 422 gérés distinctement | ✅ via `donorMessage()` |
+| `amount` transmis pour un produit à prix libre | ✅ avec contrôle préalable de `min_amount` |
 | `429` géré avec attente | ❌ |
