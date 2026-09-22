@@ -63,6 +63,24 @@ la commande, pour deux raisons :
 Le minimum affiché au donateur est donc celui du produit, qui prime sur notre
 propre plancher de 100 FCFA.
 
+Fiche du produit en production, au 22 septembre 2026 :
+
+```json
+{ "code": "prd-ITPL-8131", "pricing_type": "variable", "price": 200,
+  "min_amount": 200, "currency": "XAF", "available": true }
+```
+
+Deux conséquences :
+
+- le vrai plancher est **200**, pas 100 ; les dons de 100 à 199 sont désormais
+  refusés avec un message clair avant toute création de commande ;
+- la boutique est en **XAF**, alors que nos tables `orders`, `payments` et
+  `withdrawals` ont `currency` par défaut à **`XOF`**. Les deux valent un FCFA et
+  partagent la même parité avec l'euro, donc aucun montant n'est faux — mais le
+  code devise que nous stockons ne correspond pas à celui de la boutique. Ne
+  jamais transmettre `currency: "XOF"` à WarapPay : l'appel serait refusé en
+  `422 CURRENCY_MISMATCH`. Nous ne l'envoyons pas.
+
 ## Statuts
 
 `waiting_payment` · `completed` · `failed` · `refunded`.

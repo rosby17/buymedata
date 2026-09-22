@@ -39,7 +39,9 @@ export async function POST(request: NextRequest) {
       if (product && !product.available) return Response.json({ error: "Les paiements Mobile Money sont momentanément indisponibles." }, { status: 503 });
       const minimum = product?.pricing_type === "variable" ? product.min_amount : null;
       if (minimum && amount < minimum) {
-        return Response.json({ error: `Le montant minimum est de ${minimum.toLocaleString("fr-FR")} ${product?.currency || "FCFA"}.` }, { status: 400 });
+        // XAF comme XOF s'affichent « FCFA » pour le donateur.
+        const unit = product?.currency && !["XAF", "XOF"].includes(product.currency) ? product.currency : "FCFA";
+        return Response.json({ error: `Le montant minimum est de ${minimum.toLocaleString("fr-FR")} ${unit}.` }, { status: 400 });
       }
     }
     const supporterId = await currentUserId();
