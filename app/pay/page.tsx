@@ -411,7 +411,7 @@ function PaymentFlowInner() {
                   Traitement en cours…
                 </h3>
                 <p className="text-sm" style={{ color: theme.muted }}>
-                  Préparation de votre redirection sécurisée vers WaraPay.
+                  Préparation de votre redirection sécurisée
                 </p>
               </>
           </div>
