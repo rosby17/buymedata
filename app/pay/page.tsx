@@ -17,6 +17,8 @@ const DEFAULT_CURRENCY: CurrencyConfig = { code: "XOF", locale: "fr-FR", label: 
 
 function currencyForLocale(locale: string): CurrencyConfig {
   const value = locale.toLowerCase();
+  if (/^(fr|en)-(cm|ga|cf|td|cg|gq)/.test(value)) return { code: "XAF", locale: value, label: "FCFA", rateToXof: 1, presets: [10000, 50000, 100000] };
+  if (/^(fr|en)-(sn|ci|bj|tg|bf|ml|ne|gw)/.test(value)) return { code: "XOF", locale: value, label: "FCFA", rateToXof: 1, presets: [10000, 50000, 100000] };
   if (value.startsWith("en-us") || value.startsWith("es-us")) return { code: "USD", locale: "en-US", label: "$", rateToXof: 600, presets: [10, 50, 100] };
   if (value.startsWith("en-gb")) return { code: "GBP", locale: "en-GB", label: "£", rateToXof: 760, presets: [10, 50, 100] };
   if (value.startsWith("fr-fr") || value.startsWith("fr-be") || value.startsWith("fr-ch")) return { code: "EUR", locale: "fr-FR", label: "€", rateToXof: 656, presets: [10, 50, 100] };
