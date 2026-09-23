@@ -1,14 +1,21 @@
 "use client";
-import { useState } from "react";
+import { use, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { TopUpLogo } from "@/components/Navbar";
 
-export default function LoginPage() {
+type LoginPageProps = {
+  searchParams: Promise<{ error?: string | string[] }>;
+};
+
+export default function LoginPage({ searchParams }: LoginPageProps) {
+  const oauthError = use(searchParams).error;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(
+    typeof oauthError === "string" ? oauthError.slice(0, 240) : "",
+  );
   const [message, setMessage] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {

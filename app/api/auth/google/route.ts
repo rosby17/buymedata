@@ -10,6 +10,7 @@ export async function GET(request:Request){
  const origin=process.env.NEXT_PUBLIC_SITE_URL||"https://buymedata.tools-cl.com";
  const redirectUri=process.env.GOOGLE_REDIRECT_URI||origin+"/api/auth/google";
  const url=new URL(request.url),jar=await cookies();
+ let stage="initialization";
  // Les cookies d'un redirect doivent être posés sur la réponse elle-même : un
  // Response.redirect() brut n'emporte pas les mutations du jar cookies().
  const fail=(reason:string)=>{
@@ -28,15 +29,22 @@ export async function GET(request:Request){
  response.cookies.set("google_oauth_state",signPayload({state,nonce,verifier,intent,username,issued:Date.now()}),{...cookieOptions,maxAge:600});
  return response;
  }
+ stage="callback_validation";
  const saved=readPayload(jar.get("google_oauth_state")?.value);
  if(!saved||typeof saved.state!=="string"||!safeEqual(saved.state,url.searchParams.get("state")||"")||typeof saved.issued!=="number"||saved.issued>Date.now()||Date.now()-saved.issued>600000)return fail("La session Google a expiré. Recommencez.");
  if(url.searchParams.has("error"))return fail("Connexion Google annulée.");
+ stage="token_exchange";
  const r=await fetch("https://oauth2.googleapis.com/token",{method:"POST",headers:{"content-type":"application/x-www-form-urlencoded"},body:new URLSearchParams({code:url.searchParams.get("code")!,client_id:process.env.GOOGLE_CLIENT_ID,client_secret:process.env.GOOGLE_CLIENT_SECRET,redirect_uri:redirectUri,grant_type:"authorization_code",code_verifier:String(saved.verifier)}),signal:AbortSignal.timeout(15000)});
- if(!r.ok)return fail("Google n’a pas pu confirmer cette connexion.");
+ if(!r.ok){
+  console.error("[google-oauth] token exchange rejected",{status:r.status});
+  return fail("Google n’a pas pu confirmer cette connexion.");
+ }
  const tokens=await r.json();
+ stage="id_token_verification";
  const {payload}=await jwtVerify(tokens.id_token,keys,{issuer:["https://accounts.google.com","accounts.google.com"],audience:process.env.GOOGLE_CLIENT_ID});
  if(payload.nonce!==saved.nonce||payload.email_verified!==true||typeof payload.email!=="string"||!payload.sub)return fail("Une adresse Google vérifiée est nécessaire.");
  const email=payload.email.toLowerCase();
+ stage="database";
  const userId=await withTransaction(async client=>{
  const existing=await client.query("SELECT id,google_sub FROM profiles WHERE google_sub=$1 OR lower(email)=$2 FOR UPDATE",[payload.sub,email]);
  if(saved.intent==="signup"){
@@ -56,11 +64,16 @@ export async function GET(request:Request){
  }
  throw new Error("Aucun compte Google associé. Créez d’abord votre page.");
  });
+ stage="session_creation";
  const response=NextResponse.redirect(origin+"/app/dashboard");
  response.cookies.set(sessionCookie,createSession(userId),cookieOptions);
  response.cookies.delete("google_oauth_state");
  return response;
  }catch(error){
+ const details=error instanceof Error
+  ? {stage,name:error.name,code:(error as Error&{code?:string}).code,message:error.message}
+  : {stage,name:"UnknownError",message:"Non-Error value thrown"};
+ console.error("[google-oauth] callback failed",details);
  if((error as {code?:string}).code==="23505")return fail("Cette adresse ou ce username est déjà utilisé.");
  const message=error instanceof Error?error.message:"";
  const allowed=["Ce compte existe déjà.","Cette adresse possède","Aucun compte Google associé.","Username invalide."];
