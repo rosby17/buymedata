@@ -5,7 +5,27 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { resolveDonationDesign, themeById } from "@/lib/donation-page";
 
-const PRESET_AMOUNTS = [1000, 5000, 10000];
+type CurrencyConfig = {
+  code: string;
+  locale: string;
+  label: string;
+  rateToXof: number;
+  presets: number[];
+};
+
+const DEFAULT_CURRENCY: CurrencyConfig = { code: "XOF", locale: "fr-FR", label: "FCFA", rateToXof: 1, presets: [10000, 50000, 100000] };
+
+function currencyForLocale(locale: string): CurrencyConfig {
+  const value = locale.toLowerCase();
+  if (value.startsWith("en-us") || value.startsWith("es-us")) return { code: "USD", locale: "en-US", label: "$", rateToXof: 600, presets: [10, 50, 100] };
+  if (value.startsWith("en-gb")) return { code: "GBP", locale: "en-GB", label: "£", rateToXof: 760, presets: [10, 50, 100] };
+  if (value.startsWith("fr-fr") || value.startsWith("fr-be") || value.startsWith("fr-ch")) return { code: "EUR", locale: "fr-FR", label: "€", rateToXof: 656, presets: [10, 50, 100] };
+  if (value.startsWith("de-") || value.startsWith("es-") || value.startsWith("it-") || value.startsWith("pt-pt")) return { code: "EUR", locale: value, label: "€", rateToXof: 656, presets: [10, 50, 100] };
+  if (value.startsWith("en-ca")) return { code: "CAD", locale: "en-CA", label: "CA$", rateToXof: 440, presets: [10, 50, 100] };
+  if (value.startsWith("en-au")) return { code: "AUD", locale: "en-AU", label: "A$", rateToXof: 390, presets: [10, 50, 100] };
+  if (value.startsWith("pt-br")) return { code: "BRL", locale: "pt-BR", label: "R$", rateToXof: 110, presets: [50, 250, 500] };
+  return DEFAULT_CURRENCY;
+}
 
 const STEPS = [
   { id: 1, label: "Montant" },
@@ -29,7 +49,7 @@ function PaymentFlowInner() {
     initialAmount > 0 ? String(initialAmount) : ""
   );
   const [selectedPreset, setSelectedPreset] = useState<number | null>(
-    PRESET_AMOUNTS.includes(initialAmount) ? initialAmount : null
+    null
   );
   const [message, setMessage] = useState(initialMessage);
   const [customerName, setCustomerName] = useState("");
@@ -37,6 +57,7 @@ function PaymentFlowInner() {
   const [paymentError, setPaymentError] = useState("");
   const [showOverlay, setShowOverlay] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"mobile_money" | "card" | "paypal">("mobile_money");
+  const [currency] = useState<CurrencyConfig>(() => typeof navigator === "undefined" ? DEFAULT_CURRENCY : currencyForLocale(navigator.language));
   const design = resolveDonationDesign(creator?.name || "Créateur", creator);
   const theme = themeById(design.page_theme);
 
@@ -45,18 +66,19 @@ function PaymentFlowInner() {
     fetch(`/api/creators/${creatorId}`).then((r) => r.ok ? r.json() : Promise.reject()).then((data) => setCreator(data.creator)).catch(() => setPaymentError("Ce créateur n’existe pas."));
   }, [creatorId]);
 
-  const gaugePercent = Math.min((currentAmount / 20000) * 100, 100);
+  const formatAmount = (amountXof: number) => new Intl.NumberFormat(currency.locale, { style: "currency", currency: currency.code, maximumFractionDigits: currency.code === "XOF" ? 0 : 2 }).format(amountXof / currency.rateToXof);
+  const gaugePercent = Math.min((currentAmount / (100 * currency.rateToXof)) * 100, 100);
 
-  const handlePreset = (amt: number) => {
-    setSelectedPreset(amt);
-    setCurrentAmount(amt);
-    setCustomInput(String(amt));
+  const handlePreset = (units: number) => {
+    setSelectedPreset(units);
+    setCurrentAmount(Math.round(units * currency.rateToXof));
+    setCustomInput(String(units));
   };
 
   const handleCustomInput = (val: string) => {
     setCustomInput(val);
     const n = parseInt(val) || 0;
-    setCurrentAmount(n);
+    setCurrentAmount(Math.round(n * currency.rateToXof));
     setSelectedPreset(null);
   };
 
@@ -128,7 +150,7 @@ function PaymentFlowInner() {
                   <span className="text-sm" style={{ color: theme.text }}>Soutien</span>
                   <span className="text-2xl font-semibold" style={{ color: theme.accent }}>
                     {currentAmount > 0
-                      ? currentAmount.toLocaleString("fr-FR") + " FCFA"
+                      ? formatAmount(currentAmount)
                       : "—"}
                   </span>
                 </div>
@@ -232,7 +254,7 @@ function PaymentFlowInner() {
                   Combien souhaitez-vous donner ?
                 </h3>
                 <div className="grid grid-cols-3 gap-4 mb-4">
-                  {PRESET_AMOUNTS.map((amt) => (
+                  {currency.presets.map((amt) => (
                     <button
                       key={amt}
                       onClick={() => handlePreset(amt)}
@@ -244,10 +266,8 @@ function PaymentFlowInner() {
                         color: selectedPreset === amt ? theme.accent : theme.muted,
                       }}
                     >
-                      <span className="block text-2xl font-semibold">
-                        {amt.toLocaleString("fr-FR")}
-                      </span>
-                      <span className="block text-xs">FCFA</span>
+                      <span className="block text-2xl font-semibold">{amt.toLocaleString(currency.locale)}</span>
+                      <span className="block text-xs">{currency.label}</span>
                     </button>
                   ))}
                 </div>
@@ -272,7 +292,7 @@ function PaymentFlowInner() {
                     className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium"
                     style={{ color: theme.muted }}
                   >
-                    FCFA
+                    {currency.label}
                   </span>
                 </div>
                 <div className="flex justify-between mt-auto pt-4">
@@ -368,7 +388,7 @@ function PaymentFlowInner() {
                     className="w-full py-4 rounded-lg text-xl font-semibold shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
                     style={{ backgroundColor: theme.accent, color: theme.accentText }}
                   >
-                    Payer {currentAmount > 0 ? currentAmount.toLocaleString("fr-FR") + " FCFA" : "les mégas"}
+                    Payer {currentAmount > 0 ? formatAmount(currentAmount) : "les mégas"}
                   </button>
                   <button
                     onClick={() => setStep(2)}
